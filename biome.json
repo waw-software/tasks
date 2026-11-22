@@ -1,0 +1,23 @@
+{
+	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+	"vcs": { "enabled": false },
+	"files": {
+		"includes": [
+			"apps/**",
+			"packages/**",
+			"*.json",
+			"*.ts",
+			"!**/dist",
+			"!**/out",
+			"!**/.expo",
+			"!**/node_modules",
+			"!apps/mobile/ios",
+			"!apps/mobile/android",
+			"!docs",
+			"!pnpm-lock.yaml",
+			"!.afe-answers.json"
+		]
+	},
+	"formatter": { "enabled": true },
+	"linter": { "enabled": true }
+}
