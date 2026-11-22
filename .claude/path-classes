@@ -23,3 +23,20 @@ gate .claude/hooks/project/*
 gate .claude/harness.conf
 gate .claude/settings.project.json
 gate .claude/path-classes
+
+# Stack gates: manifests, lock file, toolchain, linter, formatter, type checker, bundler configs.
+gate package.json
+gate */package.json
+gate pnpm-workspace.yaml
+gate pnpm-lock.yaml
+gate .nvmrc
+gate biome.json
+gate tsconfig*.json
+gate */tsconfig*.json
+gate apps/web/vite.config.ts
+gate apps/desktop/electron.vite.config.ts
+gate apps/mobile/app.json
+gate scripts/project/*
+
+# The public contract's source.
+high packages/api-contract/src/*
