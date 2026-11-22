@@ -4,9 +4,9 @@
 	"main": "./out/main/index.js",
 	"scripts": {
 		"dev": "electron-vite dev",
-		"start": "electron-vite preview",
+		"start": "pnpm --filter @waw/web build && electron-vite preview",
 		"build": "electron-vite build",
-		"typecheck": "tsc --noEmit -p tsconfig.node.json --composite false && tsc --noEmit -p tsconfig.web.json --composite false",
+		"typecheck": "tsc --noEmit -p tsconfig.node.json --composite false",
 		"test": "vitest run"
 	},
 	"dependencies": {
