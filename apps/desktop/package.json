@@ -3,8 +3,8 @@
 	"version": "0.0.0",
 	"main": "./out/main/index.js",
 	"scripts": {
-		"dev": "electron-vite dev",
-		"start": "pnpm --filter @waw/web build && electron-vite preview",
+		"dev": "install-electron && electron-vite dev",
+		"start": "install-electron && pnpm --filter @waw/web build && electron-vite preview",
 		"build": "electron-vite build",
 		"typecheck": "tsc --noEmit -p tsconfig.node.json --composite false",
 		"test": "vitest run"
