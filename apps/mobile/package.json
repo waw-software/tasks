@@ -23,7 +23,7 @@
 		"start": "expo start",
 		"ios": "expo start --ios",
 		"typecheck": "tsc --noEmit",
-		"test": "jest --ci"
+		"test": "jest --ci --watchman=false"
 	},
 	"jest": {
 		"preset": "jest-expo"
