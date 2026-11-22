@@ -1,0 +1,64 @@
+# WAW Tasks
+
+Self-hosted tasks manager. Repository: `waw-software/tasks`.
+
+## Start here
+
+- People: this file.
+- AI agents: [AGENTS.md](AGENTS.md). `CLAUDE.md` imports it for Claude Code.
+- Setting up the code: run `/afe-init` in Claude Code. It asks the owner what to build and with
+  which stack, records the answers, scaffolds the code, and wires the checks into this template.
+
+## Checks
+
+```bash
+scripts/check.sh
+```
+
+The full check runs the project's code checks (`scripts/checks.d/`), the link check, the
+decision records, and the template integrity. `--verbose` prints everything, and `--if-changed`
+returns at once when nothing changed since the last passing run. CI runs the same check in the
+`check` workflow.
+
+Requires Git, bash, and Node.js 20 or later; nothing else to install. External links are not
+checked; a project that wants it adds a check such as [lychee](https://lychee.cli.rs/) in
+`scripts/checks.d/`.
+
+## Pull requests
+
+`/create-pr` in Claude Code opens the pull request: it runs the full check, reviews the change by
+the class of its paths (`.claude/path-classes`), writes the description, and watches the CI
+checks. `--skip-review` skips the review, for a caller that reviewed the change itself;
+`--skip-watch` skips the watch of the CI checks.
+
+## Modules
+
+The answers in `.afe-answers.json` turn these on or off:
+
+- `code_review` (default off): Claude also reviews each pull request that changes code in CI; it
+  needs the Claude GitHub App and the `CLAUDE_CODE_OAUTH_TOKEN` secret.
+- `secret_scan` (default on): the `secret-scan` workflow scans pull requests and pushes to `main`
+  for leaked secrets.
+- `acceptance_check` (default on): readiness requires a test for every identifier a pull request
+  lists under "Acceptance and test plan" (`TEST_GLOBS` in `.claude/harness.conf`).
+- `fail_without_change` (default off): in CI only, every new or changed test must fail on the
+  base branch (`FWC_TEST` in `.claude/harness.conf`).
+
+## Protected main branch
+
+Changes reach `main` only through pull requests with passing checks, merged with a merge
+commit. After the first push, a repository admin applies the repository settings and the GitHub
+ruleset once; `--dry-run` shows them first, and the header of the script says what they are.
+Rulesets need a public repository or, for a private one, a paid plan.
+
+```bash
+scripts/protect-branch.sh
+```
+
+## Project template
+
+This repository is generated from
+[`create-afe-project`](https://github.com/dev-oleksandrv/create-afe-project); `.afe-answers.json` records the
+template version. The template owns the files listed in `.template/owned.sha256`; change them
+in the template and update this repository with `npx create-afe-project@latest update`, or
+the `update-template` skill in Claude Code.
