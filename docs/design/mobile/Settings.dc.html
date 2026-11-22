@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings and bot access</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#B01A31}a:hover{color:#8C1427}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; padding: 56px 20px 28px; display: flex; flex-direction: column; gap: 16px; background: #FFFFFF; color: #171717; font-family: Inter, system-ui, sans-serif">
+<div style="display: flex; align-items: center; gap: 6px; margin-left: -8px">
+<a href="Browse.dc.html" aria-label="Back to browse" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: #171717">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+</a>
+<h1 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 24px; letter-spacing: -0.3px">Settings</h1>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #5C5C5C">SERVER</span>
+<div style="display: flex; flex-direction: column; border: 1px solid #E4E2DD; border-radius: 14px">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px; border-bottom: 1px solid #EEECE8">
+<span style="font-size: 15px; color: #5C5C5C">Address</span>
+<span style="font-size: 15px; font-weight: 500">tasks.example.com</span>
+</div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px; border-bottom: 1px solid #EEECE8">
+<span style="font-size: 15px; color: #5C5C5C">Sync</span>
+<span style="display: flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 500; color: #1B6943"><span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; background: #1F7A4D"></span>Up to date</span>
+</div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px">
+<span style="font-size: 15px; color: #5C5C5C">Offline changes</span>
+<span style="font-size: 15px; font-weight: 500">None waiting</span>
+</div>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #B01A31">WAW BOT ACCESS</span>
+<div style="display: flex; flex-direction: column; gap: 12px; padding: 14px; border: 1px solid #E4E2DD; border-radius: 14px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 13px; font-weight: 500; color: #5C5C5C">MCP URL</span>
+<div style="display: flex; align-items: center; gap: 8px">
+<span style="flex-grow: 1; min-width: 0; padding: 12px; border-radius: 10px; background: #F6F5F2; font-family: ui-monospace, Menlo, monospace; font-size: 13px">tasks.example.com/mcp</span>
+<button type="button" style="height: 44px; padding: 0 14px; border: 1px solid #171717; border-radius: 10px; background: #FFFFFF; color: #171717; font-family: inherit; font-size: 14px; font-weight: 600">Copy</button>
+</div>
+</div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 2px">
+<span style="font-size: 15px; font-weight: 500">Token for bots</span>
+<span style="font-size: 13px; color: #5C5C5C">Separate from your own, easy to revoke</span>
+</div>
+<button type="button" style="height: 44px; padding: 0 14px; border: none; border-radius: 10px; background: #171717; color: #FFFFFF; font-family: inherit; font-size: 14px; font-weight: 600">Create</button>
+</div>
+<span style="font-size: 13px; line-height: 20px; color: #5C5C5C">Paste both into WAW Bot, under Connectors, WAW Tasks. Bots can then read and add tasks.</span>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #5C5C5C">PREFERENCES</span>
+<div style="display: flex; flex-direction: column; border: 1px solid #E4E2DD; border-radius: 14px">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; padding: 0 14px; border-bottom: 1px solid #EEECE8">
+<label for="week-start" style="font-size: 15px; flex-grow: 1">Week starts on</label>
+<select id="week-start" style="height: 44px; border: 1px solid #D9D6D0; border-radius: 10px; background: #FFFFFF; font-family: inherit; font-size: 15px; color: #171717; padding: 0 8px"><option>Monday</option><option>Sunday</option></select>
+</div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; padding: 0 14px">
+<label for="notify" style="font-size: 15px; flex-grow: 1; padding: 14px 0">Remind me about due tasks</label>
+<input id="notify" type="checkbox" checked style="width: 24px; height: 24px; accent-color: #171717">
+</div>
+</div>
+</div>
+<a href="Connect.dc.html" style="margin-top: auto; align-self: center; font-size: 15px; font-weight: 500; padding: 12px 8px">Disconnect from this server</a>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

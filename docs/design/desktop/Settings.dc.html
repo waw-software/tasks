@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings on desktop</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#B01A31}a:hover{color:#8C1427}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 900px; background: #FFFFFF; color: #171717; font-family: Inter, system-ui, sans-serif">
+<aside style="flex: 1 0 248px; box-sizing: border-box; padding: 20px 14px; display: flex; flex-direction: column; gap: 18px; background: #F6F5F2">
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 6px">
+<div aria-hidden="true" style="width: 30px; height: 30px; border-radius: 9px; background: #D4213D; color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg></div>
+<span style="font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 17px">WAW Tasks</span>
+</div>
+<a href="QuickAdd.dc.html" style="height: 44px; border-radius: 12px; background: #D4213D; color: #FFFFFF; font-size: 15px; font-weight: 600; text-decoration: none; display: flex; align-items: center; justify-content: center">Add task</a>
+<nav aria-label="Views" style="display: flex; flex-direction: column; gap: 2px">
+<sc-for list="{{nav}}" as="n" hint-placeholder-count="3">
+<a href="{{n.href}}" style="display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 0 10px; border-radius: 10px; color: #171717; font-size: 15px; font-weight: 500; text-decoration: none"><span>{{n.label}}</span><span style="font-size: 13px; color: #5C5C5C">{{n.count}}</span></a>
+</sc-for>
+</nav>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<span style="padding: 0 10px 4px; font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #5C5C5C">PROJECTS</span>
+<sc-for list="{{projects}}" as="p" hint-placeholder-count="3">
+<a href="Project.dc.html" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 10px; border-radius: 10px; color: #171717; font-size: 15px; font-weight: 500; text-decoration: none"><span aria-hidden="true" style="width: 10px; height: 10px; border-radius: 3px; background: {{p.color}}"></span><span style="flex-grow: 1">{{p.name}}</span><span style="font-size: 13px; color: #5C5C5C">{{p.count}}</span></a>
+</sc-for>
+</div>
+<a href="Settings.dc.html" style="margin-top: auto; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 10px; border-radius: 10px; background: #FFFFFF; color: #171717; font-size: 13px; font-weight: 600; text-decoration: none"><span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; background: #1F7A4D"></span>home-server · synced</a>
+</aside>
+<main style="flex: 999 1 520px; min-width: 0; box-sizing: border-box; padding: 32px 36px; display: flex; flex-direction: column; gap: 22px">
+<h1 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 30px; letter-spacing: -0.4px">Settings</h1>
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+<section style="flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 12px; padding: 20px; border: 1px solid #E4E2DD; border-radius: 16px">
+<h2 style="margin: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #5C5C5C">SERVER</h2>
+<div style="display: flex; justify-content: space-between; gap: 12px; font-size: 15px"><span style="color: #5C5C5C">Address</span><span style="font-weight: 500">tasks.example.com</span></div>
+<div style="display: flex; justify-content: space-between; gap: 12px; font-size: 15px"><span style="color: #5C5C5C">Sync</span><span style="font-weight: 500; color: #1B6943">Up to date</span></div>
+<div style="display: flex; justify-content: space-between; gap: 12px; font-size: 15px"><span style="color: #5C5C5C">Version</span><span style="font-weight: 500">API v1 · update available</span></div>
+<div style="padding: 12px; border-radius: 10px; background: #171717; color: #FFFFFF; font-family: ui-monospace, Menlo, monospace; font-size: 13px; line-height: 20px; overflow-x: auto">docker compose pull<br>docker compose up -d</div>
+<a href="Connect.dc.html" style="align-self: flex-start; font-size: 14px; font-weight: 500; padding: 12px 0">Disconnect from this server</a>
+</section>
+<section style="flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 12px; padding: 20px; border: 1px solid #E4E2DD; border-radius: 16px">
+<h2 style="margin: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #B01A31">WAW BOT ACCESS</h2>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 13px; font-weight: 500; color: #5C5C5C">MCP URL</span>
+<div style="display: flex; align-items: center; gap: 8px">
+<span style="flex-grow: 1; min-width: 0; padding: 12px; border-radius: 10px; background: #F6F5F2; font-family: ui-monospace, Menlo, monospace; font-size: 13px; overflow-x: auto">https://tasks.example.com/mcp</span>
+<button type="button" style="height: 44px; padding: 0 14px; border: 1px solid #171717; border-radius: 10px; background: #FFFFFF; color: #171717; font-family: inherit; font-size: 14px; font-weight: 600">Copy</button>
+</div>
+</div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 2px">
+<span style="font-size: 15px; font-weight: 500">Token for bots</span>
+<span style="font-size: 13px; color: #5C5C5C">Separate from your own, easy to revoke</span>
+</div>
+<button type="button" style="height: 44px; padding: 0 14px; border: none; border-radius: 10px; background: #171717; color: #FFFFFF; font-family: inherit; font-size: 14px; font-weight: 600">Create</button>
+</div>
+<span style="font-size: 13px; line-height: 20px; color: #5C5C5C">Paste both into WAW Bot, under Connectors, WAW Tasks. Bots can then read and add tasks.</span>
+</section>
+<section style="flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 4px; padding: 20px; border: 1px solid #E4E2DD; border-radius: 16px">
+<h2 style="margin: 0 0 8px; font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #5C5C5C">DESKTOP APP</h2>
+<sc-for list="{{toggles}}" as="t" hint-placeholder-count="3">
+<div style="display: flex; align-items: center; gap: 12px; min-height: 44px">
+<input id="{{t.id}}" type="checkbox" defaultChecked="{{t.on}}" style="width: 20px; height: 20px; flex-shrink: 0; accent-color: #171717">
+<label for="{{t.id}}" style="font-size: 15px; flex-grow: 1; padding: 12px 0">{{t.label}}</label>
+</div>
+</sc-for>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px">
+<label for="shortcut" style="font-size: 15px">Quick add shortcut</label>
+<input id="shortcut" type="text" value="Ctrl or Cmd + Shift + A" style="width: 200px; height: 40px; box-sizing: border-box; padding: 0 10px; border: 1px solid #D9D6D0; border-radius: 10px; background: #FFFFFF; font-family: ui-monospace, Menlo, monospace; font-size: 13px; color: #171717">
+</div>
+</section>
+<section style="flex: 1 1 360px; min-width: 0; display: flex; flex-wrap: wrap; gap: 16px; padding: 20px; border: 1px solid #E4E2DD; border-radius: 16px">
+<div role="img" aria-label="QR code placeholder for pairing a phone" style="width: 120px; height: 120px; flex-shrink: 0; border-radius: 12px; background: #171717; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 12px">QR code</div>
+<div style="flex: 1 1 180px; min-width: 0; display: flex; flex-direction: column; gap: 8px">
+<h2 style="margin: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #5C5C5C">PAIR A PHONE</h2>
+<span style="font-size: 15px; line-height: 22px">Open WAW Tasks on your phone and scan this code. It carries the server address and a one-time token.</span>
+</div>
+</section>
+<section style="flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 4px; padding: 20px; border: 1px solid #E4E2DD; border-radius: 16px">
+<h2 style="margin: 0 0 8px; font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #5C5C5C">PREFERENCES</h2>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px">
+<label for="week-start" style="font-size: 15px">Week starts on</label>
+<select id="week-start" style="height: 44px; border: 1px solid #D9D6D0; border-radius: 10px; background: #FFFFFF; font-family: inherit; font-size: 15px; color: #171717; padding: 0 8px"><option>Monday</option><option>Sunday</option></select>
+</div>
+<div style="display: flex; align-items: center; gap: 12px; min-height: 44px">
+<input id="notify" type="checkbox" checked style="width: 20px; height: 20px; flex-shrink: 0; accent-color: #171717">
+<label for="notify" style="font-size: 15px; flex-grow: 1; padding: 12px 0">Remind me about due tasks</label>
+</div>
+</section>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+var nav = [['Inbox', '3', 'Main.dc.html'], ['Today', '5', 'Main.dc.html'], ['Upcoming', '', 'Upcoming.dc.html']].map(function (n) { return { label: n[0], count: n[1], href: n[2] }; });
+var projects = [['Home', '5', '#D4213D'], ['Work', '9', '#1F5FBF'], ['Personal', '4', '#1F7A4D']].map(function (p) { return { name: p[0], count: p[1], color: p[2] }; });
+var toggles = [['Open at login', true], ['Keep running in the menu bar or tray', true], ['Show the task count on the app icon', false]].map(function (t, i) { return { id: 'tog' + i, label: t[0], on: t[1] }; });
+return { nav: nav, projects: projects, toggles: toggles };
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Project on desktop</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#B01A31}a:hover{color:#8C1427}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 900px; background: #FFFFFF; color: #171717; font-family: Inter, system-ui, sans-serif">
+<aside style="flex: 1 0 248px; box-sizing: border-box; padding: 20px 14px; display: flex; flex-direction: column; gap: 18px; background: #F6F5F2">
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 6px">
+<div aria-hidden="true" style="width: 30px; height: 30px; border-radius: 9px; background: #D4213D; color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg></div>
+<span style="font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 17px">WAW Tasks</span>
+</div>
+<a href="QuickAdd.dc.html" style="height: 44px; border-radius: 12px; background: #D4213D; color: #FFFFFF; font-size: 15px; font-weight: 600; text-decoration: none; display: flex; align-items: center; justify-content: center">Add task</a>
+<nav aria-label="Views" style="display: flex; flex-direction: column; gap: 2px">
+<sc-for list="{{nav}}" as="n" hint-placeholder-count="3">
+<a href="{{n.href}}" style="display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 0 10px; border-radius: 10px; background: {{n.bg}}; color: #171717; font-size: 15px; font-weight: {{n.weight}}; text-decoration: none"><span>{{n.label}}</span><span style="font-size: 13px; color: #5C5C5C">{{n.count}}</span></a>
+</sc-for>
+</nav>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<span style="padding: 0 10px 4px; font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #5C5C5C">PROJECTS</span>
+<sc-for list="{{projects}}" as="p" hint-placeholder-count="3">
+<a href="Project.dc.html" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 10px; border-radius: 10px; background: {{p.bg}}; color: #171717; font-size: 15px; font-weight: {{p.weight}}; text-decoration: none"><span aria-hidden="true" style="width: 10px; height: 10px; border-radius: 3px; background: {{p.color}}"></span><span style="flex-grow: 1">{{p.name}}</span><span style="font-size: 13px; color: #5C5C5C">{{p.count}}</span></a>
+</sc-for>
+<button type="button" style="align-self: flex-start; height: 44px; padding: 0 10px; border: none; background: transparent; color: #B01A31; font-family: inherit; font-size: 14px; font-weight: 500">New project</button>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="padding: 0 10px; font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #5C5C5C">LABELS</span>
+<div style="display: flex; flex-wrap: wrap; gap: 6px; padding: 0 6px">
+<sc-for list="{{labels}}" as="l" hint-placeholder-count="4">
+<a href="Search.dc.html" style="padding: 7px 10px; border-radius: 8px; background: {{l.bg}}; color: {{l.ink}}; font-size: 13px; font-weight: 500; text-decoration: none">{{l.name}}</a>
+</sc-for>
+</div>
+</div>
+<a href="Settings.dc.html" style="margin-top: auto; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 10px; border-radius: 10px; color: #3D3D3D; font-size: 13px; font-weight: 500; text-decoration: none"><span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; background: #1F7A4D"></span>home-server · synced</a>
+</aside>
+<main style="flex: 999 1 520px; min-width: 0; box-sizing: border-box; padding: 32px 36px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px">
+<div style="display: flex; align-items: center; gap: 12px">
+<span aria-hidden="true" style="width: 14px; height: 14px; border-radius: 5px; background: #D4213D"></span>
+<h1 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 30px; letter-spacing: -0.4px">Home</h1>
+<span style="font-size: 14px; color: #5C5C5C">5 tasks</span>
+</div>
+<button type="button" style="height: 44px; padding: 0 16px; border: 1px solid #D9D6D0; border-radius: 12px; background: #FFFFFF; color: #171717; font-family: inherit; font-size: 15px; font-weight: 500">Add section</button>
+</div>
+<sc-for list="{{sections}}" as="s" hint-placeholder-count="3">
+<div style="display: flex; flex-direction: column">
+<div style="display: flex; align-items: center; gap: 10px; padding: 12px 0 4px 12px">
+<span style="font-size: 15px; font-weight: 600">{{s.name}}</span>
+<span style="font-size: 13px; color: #5C5C5C">{{s.count}}</span>
+</div>
+<sc-for list="{{s.tasks}}" as="t" hint-placeholder-count="2">
+<div style="display: flex; align-items: center; padding-right: 12px; border-bottom: 1px solid #EEECE8">
+<label style="width: 44px; height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center"><input type="checkbox" aria-label="{{t.title}}" style="width: 20px; height: 20px; accent-color: #171717"></label>
+<a href="Main.dc.html" style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; flex-grow: 1; min-width: 0; padding: 12px 0; text-decoration: none; color: #171717">
+<span style="flex: 1 1 220px; min-width: 0; font-size: 15px">{{t.title}}</span>
+<span style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; font-size: 13px; color: #5C5C5C"><span><span style="font-weight: 600; color: {{t.pInk}}">{{t.p}}</span><span>{{t.meta}}</span></span><sc-for list="{{t.labels}}" as="l" hint-placeholder-count="1"><span style="padding: 2px 8px; border-radius: 6px; background: {{l.bg}}; color: {{l.ink}}; font-weight: 500">{{l.name}}</span></sc-for></span>
+</a>
+</div>
+</sc-for>
+</div>
+</sc-for>
+</main>
+<aside aria-label="Edit project" style="flex: 1 1 340px; max-width: 420px; box-sizing: border-box; padding: 28px 28px 32px; border-left: 1px solid #EEECE8; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; align-items: center; justify-content: space-between">
+<h2 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 20px">Edit project</h2>
+<button type="button" aria-label="Close panel" style="width: 44px; height: 44px; border: none; background: transparent; color: #171717; display: flex; align-items: center; justify-content: center; padding: 0"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="p-name" style="font-size: 13px; font-weight: 500; color: #5C5C5C">Name</label>
+<input id="p-name" type="text" value="Home" style="height: 46px; box-sizing: border-box; padding: 0 14px; border: 1px solid #D9D6D0; border-radius: 12px; background: #FFFFFF; font-family: inherit; font-size: 15px; color: #171717">
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 13px; font-weight: 500; color: #5C5C5C">Color</span>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+<sc-for list="{{colors}}" as="c" hint-placeholder-count="6">
+<button type="button" aria-label="{{c.label}}" aria-pressed="{{c.pressed}}" style="width: 44px; height: 44px; border: none; border-radius: 50%; background: {{c.hex}}; box-shadow: {{c.ring}}; padding: 0"></button>
+</sc-for>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="p-parent" style="font-size: 13px; font-weight: 500; color: #5C5C5C">Inside another project</label>
+<select id="p-parent" style="height: 46px; box-sizing: border-box; padding: 0 10px; border: 1px solid #D9D6D0; border-radius: 12px; background: #FFFFFF; font-family: inherit; font-size: 15px; color: #171717"><option>None, top level</option><option>Work</option><option>Personal</option></select>
+</div>
+<div style="display: flex; align-items: center; gap: 12px; min-height: 44px">
+<input id="p-fav" type="checkbox" checked style="width: 20px; height: 20px; flex-shrink: 0; accent-color: #171717">
+<label for="p-fav" style="font-size: 15px; flex-grow: 1; padding: 12px 0">Pin to the top of the sidebar</label>
+</div>
+<button type="button" style="height: 46px; border: none; border-radius: 12px; background: #D4213D; color: #FFFFFF; font-family: inherit; font-size: 15px; font-weight: 600">Save changes</button>
+<div style="margin-top: auto; display: flex; flex-wrap: wrap; gap: 10px">
+<button type="button" style="flex: 1 1 140px; height: 44px; border: 1px solid #D9D6D0; border-radius: 12px; background: #FFFFFF; color: #171717; font-family: inherit; font-size: 14px; font-weight: 500">Archive</button>
+<button type="button" style="flex: 1 1 140px; height: 44px; border: 1px solid #D9D6D0; border-radius: 12px; background: #FFFFFF; color: #B01A31; font-family: inherit; font-size: 14px; font-weight: 600">Delete project</button>
+</div>
+</aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+function side(active) {
+var on = function (k) { return k === active; };
+return {
+nav: [['Inbox', '3', 'Main.dc.html'], ['Today', '5', 'Main.dc.html'], ['Upcoming', '', 'Upcoming.dc.html']].map(function (n) { return { label: n[0], count: n[1], href: n[2], bg: on(n[0]) ? '#FFFFFF' : 'transparent', weight: on(n[0]) ? 600 : 500 }; }),
+projects: [['Home', '5', '#D4213D'], ['Work', '9', '#1F5FBF'], ['Personal', '4', '#1F7A4D']].map(function (p) { return { name: p[0], count: p[1], color: p[2], bg: on(p[0]) ? '#FFFFFF' : 'transparent', weight: on(p[0]) ? 600 : 500 }; }),
+labels: [['@money', '#E2F0E8', '#1B6943'], ['@calls', '#DCE8F8', '#1F5FBF'], ['@waiting', '#F6E9CC', '#7A4F00'], ['@errands', '#E6DFF7', '#5B3FB5']].map(function (l) { return { name: l[0], bg: l[1], ink: l[2] }; })
+};
+}
+var inks = { 1: '#B01A31', 2: '#8A5A00', 3: '#1F5FBF' };
+var labelStyles = { money: ['#EEF6F1', '#1B6943'], calls: ['#EAF1FB', '#1F5FBF'], waiting: ['#FBF3E2', '#8A5A00'], errands: ['#F0ECFA', '#5B3FB5'] };
+function task(title, pr, meta, labels) {
+return { title: title, p: pr < 4 ? 'P' + pr + (meta ? ' · ' : '') : '', pInk: inks[pr] || '#5C5C5C', meta: meta, labels: (labels || []).map(function (n) { return { name: '@' + n, bg: labelStyles[n][0], ink: labelStyles[n][1] }; }) };
+}
+var colors = [['Red', '#D4213D'], ['Blue', '#1F5FBF'], ['Green', '#1F7A4D'], ['Amber', '#8A5A00'], ['Violet', '#5B3FB5'], ['Black', '#171717']].map(function (c, i) {
+return { label: c[0], hex: c[1], pressed: i === 0 ? 'true' : 'false', ring: i === 0 ? '0 0 0 2px #FFFFFF, 0 0 0 4px #171717' : 'none' };
+});
+var sections = [
+{ name: 'Bills', count: '2', tasks: [task('Pay rent', 1, 'Today 09:00 · repeats monthly', ['money']), task('Electricity bill', 4, 'Mon 23 Nov', ['money'])] },
+{ name: 'Repairs', count: '2', tasks: [task('Fix the kitchen tap', 2, 'Sat 28 Nov', ['calls']), task('Order a new lamp', 4, 'No date', ['errands'])] },
+{ name: 'No section', count: '1', tasks: [task('Buy milk', 4, 'Today 17:00', ['errands'])] }
+];
+return Object.assign(side('Home'), { colors: colors, sections: sections });
+}
+}
+</script>
+</body>
+</html>

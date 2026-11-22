@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Offline, waiting to sync</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#B01A31}a:hover{color:#8C1427}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; padding: 56px 0 20px; display: flex; flex-direction: column; background: #FFFFFF; color: #171717; font-family: Inter, system-ui, sans-serif">
+<div style="display: flex; flex-direction: column; gap: 12px; padding: 0 20px 14px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h1 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 30px; letter-spacing: -0.4px">Today</h1>
+<span style="font-size: 14px; color: #5C5C5C">Sun 22 Nov · 4 tasks left</span>
+</div>
+<div style="display: flex; align-items: flex-start; gap: 10px; padding: 14px; border-radius: 12px; background: #F6F5F2">
+<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#171717" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0"><path d="M3 3l18 18M8.5 16.5a5 5 0 017 0M5 13a10 10 0 013.5-2.3M19 13a10 10 0 00-5-2.8M12 20v.01"></path></svg>
+<div style="display: flex; flex-direction: column; gap: 4px; flex-grow: 1">
+<span style="font-size: 15px; font-weight: 600">Working offline</span>
+<span style="font-size: 14px; line-height: 20px; color: #3D3D3D">3 changes are saved on this phone and will sync when the server is reachable.</span>
+</div>
+<button type="button" style="height: 44px; padding: 0 12px; border: 1px solid #171717; border-radius: 10px; background: #FFFFFF; color: #171717; font-family: inherit; font-size: 13px; font-weight: 600">Retry</button>
+</div>
+</div>
+<div style="flex-grow: 1; display: flex; flex-direction: column; padding: 0 20px 0 8px; overflow: hidden">
+<sc-for list="{{tasks}}" as="t" hint-placeholder-count="4">
+<div style="display: flex; align-items: flex-start; border-bottom: 1px solid #EEECE8">
+<label style="width: 44px; height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center"><input type="checkbox" aria-label="{{t.title}}" style="width: 22px; height: 22px; accent-color: #171717"></label>
+<a href="Task.dc.html" style="display: flex; flex-direction: column; gap: 3px; flex-grow: 1; min-width: 0; padding: 10px 0; text-decoration: none; color: #171717">
+<span style="font-size: 16px; line-height: 22px">{{t.title}}</span>
+<span style="font-size: 13px; color: #5C5C5C">{{t.meta}}<span style="font-weight: 600; color: #8A5A00">{{t.pending}}</span></span>
+</a>
+</div>
+</sc-for>
+</div>
+<a href="QuickAdd.dc.html" aria-label="Add task" style="position: absolute; right: 20px; bottom: 96px; width: 56px; height: 56px; border-radius: 18px; background: #D4213D; color: #FFFFFF; display: flex; align-items: center; justify-content: center">
+<svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+</a>
+<nav aria-label="Main" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 6px 12px 0; border-top: 1px solid #EEECE8">
+<sc-for list="{{tabs}}" as="tab" hint-placeholder-count="4">
+<a href="{{tab.href}}" style="height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: {{tab.ink}}; font-size: 11px; font-weight: {{tab.weight}}">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="{{tab.d}}"></path></svg>
+<span>{{tab.label}}</span>
+</a>
+</sc-for>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+var tabs = [
+['Today', 'Main.dc.html', 'M6 5h12a2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2z M4 10h16 M9 3v4 M15 3v4'],
+['Upcoming', 'Upcoming.dc.html', 'M4 7h16 M4 12h16 M4 17h9'],
+['Search', 'Search.dc.html', 'M11 4a7 7 0 100 14 7 7 0 000-14z M20 20l-4-4'],
+['Browse', 'Browse.dc.html', 'M4 5h7v7H4z M13 5h7v7h-7z M4 14h7v5H4z M13 14h7v5h-7z']
+].map(function (t) {
+var on = t[0] === 'Today';
+return { label: t[0], href: t[1], d: t[2], ink: on ? '#D4213D' : '#5C5C5C', weight: on ? 600 : 500 };
+});
+return {
+tabs: tabs,
+tasks: [
+{ title: 'Pay rent', meta: 'P1 · 09:00 · Home', pending: '' },
+{ title: 'Pick up the dry cleaning', meta: 'Personal', pending: ' · not synced yet' },
+{ title: 'Buy milk', meta: '17:00 · Home', pending: ' · not synced yet' },
+{ title: 'Call the dentist', meta: 'Personal', pending: '' }
+]
+};
+}
+}
+</script>
+</body>
+</html>
