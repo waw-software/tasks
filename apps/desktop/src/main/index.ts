@@ -1,4 +1,4 @@
-import { electronApp, is, optimizer } from "@electron-toolkit/utils";
+import { electronApp, optimizer } from "@electron-toolkit/utils";
 import { app, BrowserWindow, shell } from "electron";
 import { resolveWebTarget } from "./web-target";
 
@@ -26,7 +26,7 @@ function createWindow(): void {
 	});
 
 	const target = resolveWebTarget({
-		isDev: is.dev,
+		isDev: import.meta.env.DEV,
 		devUrl: process.env.WAW_WEB_URL,
 		appPath: app.getAppPath(),
 	});
