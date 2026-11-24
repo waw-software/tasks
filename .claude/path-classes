@@ -35,6 +35,7 @@ gate tsconfig*.json
 gate */tsconfig*.json
 gate apps/web/vite.config.ts
 gate apps/desktop/electron.vite.config.ts
+gate packages/e2e/playwright.config.ts
 gate apps/mobile/app.json
 gate scripts/project/*
 
