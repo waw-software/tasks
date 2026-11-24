@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Repeat and reminders</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#B01A31}a:hover{color:#8C1427}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; padding: 56px 20px 28px; display: flex; flex-direction: column; gap: 16px; background: #FFFFFF; color: #171717; font-family: Inter, system-ui, sans-serif">
+<div style="display: flex; align-items: center; gap: 6px; margin-left: -8px">
+<a href="Task.dc.html" aria-label="Back to task" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: #171717">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+</a>
+<h1 style="margin: 0; flex-grow: 1; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 22px; letter-spacing: -0.2px">Repeat and reminders</h1>
+</div>
+<fieldset style="margin: 0; padding: 0; border: none; display: flex; flex-direction: column; gap: 8px">
+<legend style="padding: 0 0 8px; font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #5C5C5C">REPEAT</legend>
+<div style="display: flex; flex-direction: column; border: 1px solid #E4E2DD; border-radius: 14px">
+<sc-for list="{{repeats}}" as="r" hint-placeholder-count="5">
+<div style="display: flex; align-items: center; gap: 12px; min-height: 50px; padding: 0 14px; border-bottom: 1px solid #EEECE8">
+<input id="{{r.id}}" name="repeat" type="radio" defaultChecked="{{r.on}}" style="width: 22px; height: 22px; flex-shrink: 0; accent-color: #D4213D">
+<label for="{{r.id}}" style="font-size: 15px; flex-grow: 1; padding: 14px 0">{{r.label}}</label>
+</div>
+</sc-for>
+</div>
+<span style="font-size: 13px; color: #5C5C5C">Next one appears after you complete this one: Tue 1 Dec, 09:00.</span>
+</fieldset>
+<fieldset style="margin: 0; padding: 0; border: none; display: flex; flex-direction: column; gap: 8px">
+<legend style="padding: 0 0 8px; font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #5C5C5C">REMIND ME</legend>
+<div style="display: flex; flex-direction: column; border: 1px solid #E4E2DD; border-radius: 14px">
+<sc-for list="{{reminders}}" as="m" hint-placeholder-count="3">
+<div style="display: flex; align-items: center; gap: 12px; min-height: 50px; padding: 0 14px; border-bottom: 1px solid #EEECE8">
+<input id="{{m.id}}" type="checkbox" defaultChecked="{{m.on}}" style="width: 22px; height: 22px; flex-shrink: 0; accent-color: #171717">
+<label for="{{m.id}}" style="font-size: 15px; flex-grow: 1; padding: 14px 0">{{m.label}}</label>
+</div>
+</sc-for>
+<button type="button" style="height: 50px; padding: 0 14px; border: none; background: transparent; color: #B01A31; font-family: inherit; font-size: 15px; font-weight: 500; text-align: left; display: flex; align-items: center; gap: 8px">
+<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+<span>At a specific time</span>
+</button>
+</div>
+</fieldset>
+<a href="Task.dc.html" style="margin-top: auto; height: 54px; border-radius: 14px; background: #D4213D; color: #FFFFFF; font-size: 16px; font-weight: 600; text-decoration: none; display: flex; align-items: center; justify-content: center">Done</a>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+var repeats = ['Never', 'Every day', 'Every week on Sunday', 'Every month on the 1st', 'Custom'].map(function (label, i) {
+return { id: 'rep' + i, label: label, on: i === 3 };
+});
+var reminders = ['At the time of the task', '10 minutes before', '1 day before'].map(function (label, i) {
+return { id: 'rem' + i, label: label, on: i !== 1 };
+});
+return { repeats: repeats, reminders: reminders };
+}
+}
+</script>
+</body>
+</html>

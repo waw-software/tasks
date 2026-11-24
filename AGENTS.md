@@ -5,6 +5,11 @@ comes from the project template: change it in the template, except the project b
 
 <!-- project:start -->
 The project is **WAW Tasks** (`waw-software/tasks`). Self-hosted tasks manager.
+Apps: `apps/core-server`, `apps/core-worker`, `apps/web`, `apps/mobile`, `apps/desktop`; package: `packages/api-contract`.
+Stack: Node 24, TypeScript, Fastify, Drizzle, pg-boss, React, Expo, Electron; see [the stack ADR](docs/decisions/0001-project-stack.md).
+Commands: `pnpm install --frozen-lockfile`, `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test:unit`, `pnpm build`.
+Project rules and review criteria: `docs/project-rules.md`.
+Requirements: `docs/requirements.md`; spec: `docs/SPEC.md`; design: `docs/DESIGN.md`.
 <!-- project:end -->
 
 ## Commands

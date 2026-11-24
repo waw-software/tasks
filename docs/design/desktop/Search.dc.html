@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Search and filters on desktop</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#B01A31}a:hover{color:#8C1427}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 900px; background: #FFFFFF; color: #171717; font-family: Inter, system-ui, sans-serif">
+<aside style="flex: 1 0 248px; box-sizing: border-box; padding: 20px 14px; display: flex; flex-direction: column; gap: 18px; background: #F6F5F2">
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 6px">
+<div aria-hidden="true" style="width: 30px; height: 30px; border-radius: 9px; background: #D4213D; color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg></div>
+<span style="font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 17px">WAW Tasks</span>
+</div>
+<a href="QuickAdd.dc.html" style="height: 44px; border-radius: 12px; background: #D4213D; color: #FFFFFF; font-size: 15px; font-weight: 600; text-decoration: none; display: flex; align-items: center; justify-content: center">Add task</a>
+<nav aria-label="Views" style="display: flex; flex-direction: column; gap: 2px">
+<sc-for list="{{nav}}" as="n" hint-placeholder-count="3">
+<a href="{{n.href}}" style="display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 0 10px; border-radius: 10px; background: {{n.bg}}; color: #171717; font-size: 15px; font-weight: {{n.weight}}; text-decoration: none"><span>{{n.label}}</span><span style="font-size: 13px; color: #5C5C5C">{{n.count}}</span></a>
+</sc-for>
+</nav>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<span style="padding: 0 10px 4px; font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #5C5C5C">PROJECTS</span>
+<sc-for list="{{projects}}" as="p" hint-placeholder-count="3">
+<a href="Project.dc.html" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 10px; border-radius: 10px; background: {{p.bg}}; color: #171717; font-size: 15px; font-weight: {{p.weight}}; text-decoration: none"><span aria-hidden="true" style="width: 10px; height: 10px; border-radius: 3px; background: {{p.color}}"></span><span style="flex-grow: 1">{{p.name}}</span><span style="font-size: 13px; color: #5C5C5C">{{p.count}}</span></a>
+</sc-for>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="padding: 0 10px; font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #5C5C5C">LABELS</span>
+<div style="display: flex; flex-wrap: wrap; gap: 6px; padding: 0 6px">
+<sc-for list="{{labels}}" as="l" hint-placeholder-count="4">
+<a href="Search.dc.html" style="padding: 7px 10px; border-radius: 8px; background: {{l.bg}}; color: {{l.ink}}; font-size: 13px; font-weight: 500; text-decoration: none">{{l.name}}</a>
+</sc-for>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<span style="padding: 0 10px 4px; font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #5C5C5C">FILTERS</span>
+<sc-for list="{{filters}}" as="f" hint-placeholder-count="2">
+<a href="Search.dc.html" style="display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 0 10px; border-radius: 10px; color: #171717; font-size: 15px; text-decoration: none"><span>{{f.name}}</span><span style="font-size: 13px; color: #5C5C5C">{{f.count}}</span></a>
+</sc-for>
+</div>
+<a href="Settings.dc.html" style="margin-top: auto; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 10px; border-radius: 10px; color: #3D3D3D; font-size: 13px; font-weight: 500; text-decoration: none"><span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; background: #1F7A4D"></span>home-server · synced</a>
+</aside>
+<main style="flex: 999 1 520px; min-width: 0; box-sizing: border-box; padding: 32px 36px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; align-items: center; gap: 12px; height: 52px; box-sizing: border-box; padding: 0 16px; border: 1px solid #171717; border-radius: 14px">
+<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#171717" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>
+<label for="q" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%)">Search tasks</label>
+<input id="q" type="search" value="rent" style="flex-grow: 1; min-width: 0; height: 46px; border: none; background: transparent; font-family: inherit; font-size: 17px; color: #171717">
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{chips}}" as="c" hint-placeholder-count="4">
+<button type="button" aria-pressed="{{c.pressed}}" style="height: 44px; padding: 0 14px; border: 1px solid {{c.line}}; border-radius: 999px; background: {{c.bg}}; color: {{c.ink}}; font-family: inherit; font-size: 14px; font-weight: 500">{{c.label}}</button>
+</sc-for>
+</div>
+<div style="display: flex; flex-direction: column">
+<span style="padding: 8px 0 4px 12px; font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #5C5C5C">2 OPEN TASKS</span>
+<sc-for list="{{results}}" as="t" hint-placeholder-count="2">
+<div style="display: flex; align-items: center; padding-right: 12px; border-bottom: 1px solid #EEECE8">
+<label style="width: 44px; height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center"><input type="checkbox" aria-label="{{t.title}}" style="width: 20px; height: 20px; accent-color: #171717"></label>
+<a href="Main.dc.html" style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; flex-grow: 1; min-width: 0; padding: 12px 0; text-decoration: none; color: #171717">
+<span style="flex: 1 1 220px; min-width: 0; font-size: 15px">{{t.title}}</span>
+<span style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; font-size: 13px; color: #5C5C5C"><span><span style="font-weight: 600; color: {{t.pInk}}">{{t.p}}</span><span>{{t.meta}}</span></span><sc-for list="{{t.labels}}" as="l" hint-placeholder-count="1"><span style="padding: 2px 8px; border-radius: 6px; background: {{l.bg}}; color: {{l.ink}}; font-weight: 500">{{l.name}}</span></sc-for><span style="display: flex; align-items: center; gap: 6px"><span>{{t.proj}}</span><span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 3px; background: {{t.projColor}}"></span></span></span>
+</a>
+</div>
+</sc-for>
+<span style="padding: 18px 0 4px 12px; font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #5C5C5C">COMPLETED</span>
+<div style="display: flex; align-items: center; padding-right: 12px; border-bottom: 1px solid #EEECE8">
+<label style="width: 44px; height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center"><input type="checkbox" checked aria-label="Pay rent, done in October" style="width: 20px; height: 20px; accent-color: #171717"></label>
+<span style="flex-grow: 1; font-size: 15px; color: #5C5C5C; text-decoration: line-through">Pay rent</span>
+<span style="font-size: 13px; color: #5C5C5C">Done on 1 Oct</span>
+</div>
+</div>
+</main>
+<aside aria-label="Save as filter" style="flex: 1 1 340px; max-width: 420px; box-sizing: border-box; padding: 28px 28px 32px; border-left: 1px solid #EEECE8; display: flex; flex-direction: column; gap: 16px">
+<h2 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 20px">Save as filter</h2>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="f-name" style="font-size: 13px; font-weight: 500; color: #5C5C5C">Name</label>
+<input id="f-name" type="text" value="Rent and housing" style="height: 46px; box-sizing: border-box; padding: 0 14px; border: 1px solid #D9D6D0; border-radius: 12px; background: #FFFFFF; font-family: inherit; font-size: 15px; color: #171717">
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #5C5C5C">SHOW TASKS WHERE</span>
+<sc-for list="{{conditions}}" as="c" hint-placeholder-count="3">
+<div style="display: flex; align-items: center; gap: 8px">
+<label for="{{c.id}}" style="width: 84px; flex-shrink: 0; font-size: 14px">{{c.label}}</label>
+<select id="{{c.id}}" style="flex-grow: 1; min-width: 0; height: 44px; padding: 0 10px; border: 1px solid #D9D6D0; border-radius: 12px; background: #FFFFFF; font-family: inherit; font-size: 14px; color: #171717"><option>{{c.value}}</option></select>
+</div>
+</sc-for>
+<button type="button" style="align-self: flex-start; height: 44px; padding: 0; border: none; background: transparent; color: #B01A31; font-family: inherit; font-size: 14px; font-weight: 500">Add a condition</button>
+</div>
+<div style="display: flex; gap: 10px; padding: 14px; border-radius: 12px; background: #F6F5F2">
+<span style="font-size: 14px; line-height: 21px; color: #3D3D3D">Matches 2 open tasks now. Bots see saved filters too, so WAW Bot can fetch this list by name.</span>
+</div>
+<button type="button" style="margin-top: auto; height: 46px; border: none; border-radius: 12px; background: #D4213D; color: #FFFFFF; font-family: inherit; font-size: 15px; font-weight: 600">Save filter</button>
+</aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+function side(active) {
+var on = function (k) { return k === active; };
+return {
+nav: [['Inbox', '3', 'Main.dc.html'], ['Today', '5', 'Main.dc.html'], ['Upcoming', '', 'Upcoming.dc.html']].map(function (n) { return { label: n[0], count: n[1], href: n[2], bg: on(n[0]) ? '#FFFFFF' : 'transparent', weight: on(n[0]) ? 600 : 500 }; }),
+projects: [['Home', '5', '#D4213D'], ['Work', '9', '#1F5FBF'], ['Personal', '4', '#1F7A4D']].map(function (p) { return { name: p[0], count: p[1], color: p[2], bg: on(p[0]) ? '#FFFFFF' : 'transparent', weight: on(p[0]) ? 600 : 500 }; }),
+labels: [['@money', '#E2F0E8', '#1B6943'], ['@calls', '#DCE8F8', '#1F5FBF'], ['@waiting', '#F6E9CC', '#7A4F00'], ['@errands', '#E6DFF7', '#5B3FB5']].map(function (l) { return { name: l[0], bg: l[1], ink: l[2] }; }),
+filters: [{ name: 'Priority 1', count: '3' }, { name: 'This week at work', count: '5' }]
+};
+}
+var inks = { 1: '#B01A31', 2: '#8A5A00', 3: '#1F5FBF' };
+var projects = { Home: '#D4213D', Work: '#1F5FBF', Personal: '#1F7A4D' };
+var labelStyles = { money: ['#EEF6F1', '#1B6943'], calls: ['#EAF1FB', '#1F5FBF'], waiting: ['#FBF3E2', '#8A5A00'], errands: ['#F0ECFA', '#5B3FB5'] };
+function task(title, pr, meta, proj, labels) {
+return { title: title, p: pr < 4 ? 'P' + pr + (meta ? ' · ' : '') : '', pInk: inks[pr] || '#5C5C5C', meta: meta, proj: proj, projColor: projects[proj], labels: (labels || []).map(function (n) { return { name: '@' + n, bg: labelStyles[n][0], ink: labelStyles[n][1] }; }) };
+}
+var chips = ['Project: Home', 'Priority', 'Label', 'Date'].map(function (label, i) {
+var on = i === 0;
+return { label: label, pressed: on ? 'true' : 'false', line: on ? '#171717' : '#D9D6D0', bg: on ? '#171717' : '#FFFFFF', ink: on ? '#FFFFFF' : '#171717' };
+});
+var conditions = [['Text has', 'rent'], ['Project is', 'Home'], ['Priority is', 'Any']].map(function (c, i) { return { id: 'cond' + i, label: c[0], value: c[1] }; });
+return Object.assign(side(''), {
+chips: chips,
+conditions: conditions,
+results: [task('Pay rent', 1, 'Today 09:00 · repeats monthly', 'Home', ['money']), task('Renew the rental insurance', 3, 'Thu 10 Dec', 'Home', ['money'])]
+});
+}
+}
+</script>
+</body>
+</html>

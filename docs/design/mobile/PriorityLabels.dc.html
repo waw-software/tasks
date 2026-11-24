@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Priority and labels</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#B01A31}a:hover{color:#8C1427}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; padding: 56px 20px 28px; display: flex; flex-direction: column; gap: 18px; background: #FFFFFF; color: #171717; font-family: Inter, system-ui, sans-serif">
+<div style="display: flex; align-items: center; gap: 6px; margin-left: -8px">
+<a href="Task.dc.html" aria-label="Back to task" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: #171717">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+</a>
+<h1 style="margin: 0; flex-grow: 1; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 22px; letter-spacing: -0.2px">Priority and labels</h1>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #5C5C5C">PRIORITY</span>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{priorities}}" as="p" hint-placeholder-count="4">
+<button type="button" aria-pressed="{{p.pressed}}" style="height: 72px; border: {{p.border}}; border-radius: 14px; background: {{p.bg}}; color: {{p.ink}}; font-family: inherit; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 0">
+<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4 M5 4h13l-3 4.5 3 4.5H5"></path></svg>
+<span style="font-size: 14px; font-weight: 600">{{p.label}}</span>
+</button>
+</sc-for>
+</div>
+<span style="font-size: 13px; color: #5C5C5C">P1 tasks rise to the top of Today. P4 is the default.</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #5C5C5C">LABELS</span>
+<div style="display: flex; align-items: center; gap: 10px; height: 48px; box-sizing: border-box; padding: 0 14px; border: 1px solid #D9D6D0; border-radius: 12px">
+<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5C5C5C" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>
+<label for="label-search" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%)">Find or create a label</label>
+<input id="label-search" type="search" placeholder="Find or create a label" style="flex-grow: 1; min-width: 0; height: 44px; border: none; background: transparent; font-family: inherit; font-size: 16px; color: #171717">
+</div>
+<div style="display: flex; flex-direction: column; border: 1px solid #E4E2DD; border-radius: 14px">
+<sc-for list="{{labels}}" as="l" hint-placeholder-count="4">
+<div style="display: flex; align-items: center; gap: 12px; min-height: 50px; padding: 0 14px; border-bottom: 1px solid #EEECE8">
+<input id="{{l.id}}" type="checkbox" defaultChecked="{{l.on}}" style="width: 22px; height: 22px; flex-shrink: 0; accent-color: #171717">
+<label for="{{l.id}}" style="flex-grow: 1; padding: 12px 0"><span style="padding: 3px 9px; border-radius: 6px; background: {{l.bg}}; color: {{l.ink}}; font-size: 14px; font-weight: 500">{{l.name}}</span></label>
+<span style="font-size: 13px; color: #5C5C5C">{{l.count}}</span>
+</div>
+</sc-for>
+<button type="button" style="height: 50px; padding: 0 14px; border: none; background: transparent; color: #B01A31; font-family: inherit; font-size: 15px; font-weight: 500; text-align: left; display: flex; align-items: center; gap: 8px">
+<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+<span>New label</span>
+</button>
+</div>
+</div>
+<a href="Task.dc.html" style="margin-top: auto; height: 54px; border-radius: 14px; background: #D4213D; color: #FFFFFF; font-size: 16px; font-weight: 600; text-decoration: none; display: flex; align-items: center; justify-content: center">Done</a>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+var inks = ['#B01A31', '#8A5A00', '#1F5FBF', '#5C5C5C'];
+var priorities = ['P1', 'P2', 'P3', 'P4'].map(function (label, i) {
+var on = i === 0;
+return { label: label, pressed: on ? 'true' : 'false', border: on ? '2px solid #B01A31' : '1px solid #D9D6D0', bg: on ? '#FCEBEE' : '#FFFFFF', ink: inks[i] };
+});
+var labels = [['@money', '6 tasks', true, '#EEF6F1', '#1B6943'], ['@calls', '3 tasks', false, '#EAF1FB', '#1F5FBF'], ['@waiting', '2 tasks', false, '#FBF3E2', '#8A5A00'], ['@errands', '4 tasks', false, '#F0ECFA', '#5B3FB5']].map(function (l, i) {
+return { id: 'lab' + i, name: l[0], count: l[1], on: l[2], bg: l[3], ink: l[4] };
+});
+return { priorities: priorities, labels: labels };
+}
+}
+</script>
+</body>
+</html>

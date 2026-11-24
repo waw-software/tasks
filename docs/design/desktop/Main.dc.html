@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Today on desktop</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#B01A31}a:hover{color:#8C1427}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 900px; background: #FFFFFF; color: #171717; font-family: Inter, system-ui, sans-serif">
+<aside style="flex: 1 0 248px; box-sizing: border-box; padding: 20px 14px; display: flex; flex-direction: column; gap: 18px; background: #F6F5F2">
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 6px">
+<div aria-hidden="true" style="width: 30px; height: 30px; border-radius: 9px; background: #D4213D; color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg></div>
+<span style="font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 17px">WAW Tasks</span>
+</div>
+<a href="QuickAdd.dc.html" style="height: 44px; border-radius: 12px; background: #D4213D; color: #FFFFFF; font-size: 15px; font-weight: 600; text-decoration: none; display: flex; align-items: center; justify-content: center">Add task</a>
+<nav aria-label="Views" style="display: flex; flex-direction: column; gap: 2px">
+<sc-for list="{{nav}}" as="n" hint-placeholder-count="3">
+<a href="{{n.href}}" style="display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 0 10px; border-radius: 10px; background: {{n.bg}}; color: #171717; font-size: 15px; font-weight: {{n.weight}}; text-decoration: none"><span>{{n.label}}</span><span style="font-size: 13px; color: #5C5C5C">{{n.count}}</span></a>
+</sc-for>
+</nav>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<span style="padding: 0 10px 4px; font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #5C5C5C">PROJECTS</span>
+<sc-for list="{{projects}}" as="p" hint-placeholder-count="3">
+<a href="Project.dc.html" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 10px; border-radius: 10px; background: {{p.bg}}; color: #171717; font-size: 15px; font-weight: {{p.weight}}; text-decoration: none"><span aria-hidden="true" style="width: 10px; height: 10px; border-radius: 3px; background: {{p.color}}"></span><span style="flex-grow: 1">{{p.name}}</span><span style="font-size: 13px; color: #5C5C5C">{{p.count}}</span></a>
+</sc-for>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="padding: 0 10px; font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #5C5C5C">LABELS</span>
+<div style="display: flex; flex-wrap: wrap; gap: 6px; padding: 0 6px">
+<sc-for list="{{labels}}" as="l" hint-placeholder-count="4">
+<a href="Search.dc.html" style="padding: 7px 10px; border-radius: 8px; background: {{l.bg}}; color: {{l.ink}}; font-size: 13px; font-weight: 500; text-decoration: none">{{l.name}}</a>
+</sc-for>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<span style="padding: 0 10px 4px; font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #5C5C5C">FILTERS</span>
+<sc-for list="{{filters}}" as="f" hint-placeholder-count="2">
+<a href="Search.dc.html" style="display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 0 10px; border-radius: 10px; color: #171717; font-size: 15px; text-decoration: none"><span>{{f.name}}</span><span style="font-size: 13px; color: #5C5C5C">{{f.count}}</span></a>
+</sc-for>
+</div>
+<a href="Settings.dc.html" style="margin-top: auto; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 10px; border-radius: 10px; color: #3D3D3D; font-size: 13px; font-weight: 500; text-decoration: none"><span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; background: #1F7A4D"></span>home-server · synced</a>
+</aside>
+<main style="flex: 999 1 520px; min-width: 0; box-sizing: border-box; padding: 32px 36px; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h1 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 30px; letter-spacing: -0.4px">Today</h1>
+<span style="font-size: 14px; color: #5C5C5C">Sun 22 Nov · 5 tasks left</span>
+</div>
+<div style="flex: 0 1 280px; display: flex; align-items: center; gap: 10px; height: 44px; box-sizing: border-box; padding: 0 14px; border: 1px solid #D9D6D0; border-radius: 12px">
+<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5C5C5C" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>
+<label for="q" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%)">Search tasks</label>
+<input id="q" type="search" placeholder="Search" style="flex-grow: 1; min-width: 0; height: 40px; border: none; background: transparent; font-family: inherit; font-size: 15px; color: #171717">
+</div>
+</div>
+<div style="display: flex; align-items: center; gap: 10px">
+<div role="img" aria-label="2 of 7 tasks done" style="flex-grow: 1; height: 6px; border-radius: 3px; background: #EEECE8"><div style="width: 29%; height: 6px; border-radius: 3px; background: #171717"></div></div>
+<span style="font-size: 13px; color: #5C5C5C">2 of 7 done</span>
+</div>
+<div style="display: flex; flex-direction: column">
+<span style="padding: 8px 0 4px 12px; font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #B01A31">OVERDUE</span>
+<sc-for list="{{overdue}}" as="t" hint-placeholder-count="1">
+<div style="display: flex; align-items: center; padding-right: 12px; border-bottom: 1px solid #EEECE8; border-radius: 10px; background: {{t.rowBg}}">
+<label style="width: 44px; height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center"><input type="checkbox" aria-label="{{t.title}}" style="width: 20px; height: 20px; accent-color: #171717"></label>
+<a href="Main.dc.html" style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; flex-grow: 1; min-width: 0; padding: 12px 0; text-decoration: none; color: #171717">
+<span style="flex: 1 1 220px; min-width: 0; font-size: 15px">{{t.title}}</span>
+<span style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; font-size: 13px; color: #5C5C5C"><span><span style="font-weight: 600; color: {{t.pInk}}">{{t.p}}</span><span>{{t.meta}}</span></span><sc-for list="{{t.labels}}" as="l" hint-placeholder-count="1"><span style="padding: 2px 8px; border-radius: 6px; background: {{l.bg}}; color: {{l.ink}}; font-weight: 500">{{l.name}}</span></sc-for><span style="display: flex; align-items: center; gap: 6px"><span>{{t.proj}}</span><span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 3px; background: {{t.projColor}}"></span></span></span>
+</a>
+</div>
+</sc-for>
+<span style="padding: 18px 0 4px 12px; font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #5C5C5C">TODAY</span>
+<sc-for list="{{today}}" as="t" hint-placeholder-count="4">
+<div style="display: flex; align-items: center; padding-right: 12px; border-bottom: 1px solid #EEECE8; border-radius: 10px; background: {{t.rowBg}}">
+<label style="width: 44px; height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center"><input type="checkbox" aria-label="{{t.title}}" style="width: 20px; height: 20px; accent-color: #171717"></label>
+<a href="Main.dc.html" style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; flex-grow: 1; min-width: 0; padding: 12px 0; text-decoration: none; color: #171717">
+<span style="flex: 1 1 220px; min-width: 0; font-size: 15px">{{t.title}}</span>
+<span style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; font-size: 13px; color: #5C5C5C"><span><span style="font-weight: 600; color: {{t.pInk}}">{{t.p}}</span><span>{{t.meta}}</span></span><sc-for list="{{t.labels}}" as="l" hint-placeholder-count="1"><span style="padding: 2px 8px; border-radius: 6px; background: {{l.bg}}; color: {{l.ink}}; font-weight: 500">{{l.name}}</span></sc-for><span style="display: flex; align-items: center; gap: 6px"><span>{{t.proj}}</span><span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 3px; background: {{t.projColor}}"></span></span></span>
+</a>
+</div>
+</sc-for>
+<button type="button" style="align-self: flex-start; height: 44px; margin-left: 12px; padding: 0; border: none; background: transparent; color: #5C5C5C; font-family: inherit; font-size: 14px; font-weight: 500">2 completed today · Show</button>
+</div>
+</main>
+<aside aria-label="Task details" style="flex: 1 1 340px; max-width: 420px; box-sizing: border-box; padding: 28px 28px 32px; border-left: 1px solid #EEECE8; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; align-items: center; justify-content: space-between">
+<a href="Project.dc.html" style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; color: #3D3D3D; text-decoration: none; padding: 12px 0"><span aria-hidden="true" style="width: 10px; height: 10px; border-radius: 3px; background: #D4213D"></span>Home / Bills</a>
+<button type="button" aria-label="Close panel" style="width: 44px; height: 44px; border: none; background: transparent; color: #171717; display: flex; align-items: center; justify-content: center; padding: 0"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+</div>
+<div style="display: flex; align-items: flex-start; gap: 4px; margin-left: -10px">
+<label style="width: 44px; height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center"><input type="checkbox" aria-label="Complete: Pay rent" style="width: 22px; height: 22px; accent-color: #171717"></label>
+<div style="display: flex; flex-direction: column; gap: 6px; padding-top: 6px">
+<h2 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 24px; line-height: 30px; letter-spacing: -0.3px">Pay rent</h2>
+<p style="margin: 0; font-size: 15px; line-height: 22px; color: #5C5C5C">Transfer to the landlord's account and keep the confirmation.</p>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; border: 1px solid #E4E2DD; border-radius: 14px">
+<sc-for list="{{fields}}" as="f" hint-placeholder-count="4">
+<a href="TaskEdit.dc.html" style="display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 14px; border-bottom: 1px solid #EEECE8; text-decoration: none; color: #171717">
+<span style="width: 76px; flex-shrink: 0; font-size: 14px; color: #5C5C5C">{{f.label}}</span>
+<span style="padding: {{f.pad}}; border-radius: 6px; background: {{f.bg}}; font-size: 15px; font-weight: 500; color: {{f.ink}}">{{f.value}}</span>
+</a>
+</sc-for>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<span style="font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #5C5C5C">SUBTASKS · 1 OF 3</span>
+<div style="display: flex; align-items: center; margin-left: -10px">
+<label style="width: 44px; height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center"><input id="s1" type="checkbox" checked style="width: 20px; height: 20px; accent-color: #171717"></label>
+<label for="s1" style="font-size: 15px; color: #5C5C5C; text-decoration: line-through">Check the amount</label>
+</div>
+<div style="display: flex; align-items: center; margin-left: -10px">
+<label style="width: 44px; height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center"><input id="s2" type="checkbox" style="width: 20px; height: 20px; accent-color: #171717"></label>
+<label for="s2" style="font-size: 15px">Make the transfer</label>
+</div>
+<div style="display: flex; align-items: center; margin-left: -10px">
+<label style="width: 44px; height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center"><input id="s3" type="checkbox" style="width: 20px; height: 20px; accent-color: #171717"></label>
+<label for="s3" style="font-size: 15px">Save the confirmation</label>
+</div>
+<button type="button" style="align-self: flex-start; height: 44px; padding: 0; border: none; background: transparent; color: #B01A31; font-family: inherit; font-size: 15px; font-weight: 500">Add subtask</button>
+</div>
+<span style="margin-top: auto; font-size: 13px; color: #5C5C5C">Repeats monthly · next on Tue 1 Dec</span>
+</aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+function side(active) {
+var on = function (k) { return k === active; };
+return {
+nav: [['Inbox', '3', 'Main.dc.html'], ['Today', '5', 'Main.dc.html'], ['Upcoming', '', 'Upcoming.dc.html']].map(function (n) { return { label: n[0], count: n[1], href: n[2], bg: on(n[0]) ? '#FFFFFF' : 'transparent', weight: on(n[0]) ? 600 : 500 }; }),
+projects: [['Home', '5', '#D4213D'], ['Work', '9', '#1F5FBF'], ['Personal', '4', '#1F7A4D']].map(function (p) { return { name: p[0], count: p[1], color: p[2], bg: on(p[0]) ? '#FFFFFF' : 'transparent', weight: on(p[0]) ? 600 : 500 }; }),
+labels: [['@money', '#E2F0E8', '#1B6943'], ['@calls', '#DCE8F8', '#1F5FBF'], ['@waiting', '#F6E9CC', '#7A4F00'], ['@errands', '#E6DFF7', '#5B3FB5']].map(function (l) { return { name: l[0], bg: l[1], ink: l[2] }; }),
+filters: [{ name: 'Priority 1', count: '3' }, { name: 'This week at work', count: '5' }]
+};
+}
+var inks = { 1: '#B01A31', 2: '#8A5A00', 3: '#1F5FBF' };
+var projects = { Home: '#D4213D', Work: '#1F5FBF', Personal: '#1F7A4D' };
+var labelStyles = { money: ['#EEF6F1', '#1B6943'], calls: ['#EAF1FB', '#1F5FBF'], waiting: ['#FBF3E2', '#8A5A00'], errands: ['#F0ECFA', '#5B3FB5'] };
+function task(title, pr, meta, proj, labels, selected) {
+return { title: title, p: pr < 4 ? 'P' + pr + (meta ? ' · ' : '') : '', pInk: inks[pr] || '#5C5C5C', meta: meta, proj: proj || '', projColor: proj ? projects[proj] : 'transparent', rowBg: selected ? '#F6F5F2' : 'transparent', labels: (labels || []).map(function (n) { return { name: '@' + n, bg: labelStyles[n][0], ink: labelStyles[n][1] }; }) };
+}
+var fields = [['Due', 'Every month on the 1st, 09:00', '#171717'], ['Priority', 'Priority 1', '#B01A31'], ['Labels', '@money', '#1B6943'], ['Reminder', '1 day before', '#171717']].map(function (f) {
+var tag = f[0] === 'Labels';
+return { label: f[0], value: f[1], ink: f[2], bg: tag ? '#EEF6F1' : 'transparent', pad: tag ? '3px 9px' : '0' };
+});
+return Object.assign(side('Today'), {
+fields: fields,
+overdue: [task('Send the invoice to the client', 1, 'Fri', 'Work', [])],
+today: [
+task('Pay rent', 1, '09:00 · repeats monthly', 'Home', ['money'], true),
+task('Review the pull request', 2, '', 'Work', []),
+task('Buy milk', 4, '17:00', 'Home', ['errands']),
+task('Call the dentist', 4, '0 of 2 subtasks', 'Personal', ['calls'])
+]
+});
+}
+}
+</script>
+</body>
+</html>

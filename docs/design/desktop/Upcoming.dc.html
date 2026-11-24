@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Upcoming week on desktop</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#B01A31}a:hover{color:#8C1427}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 900px; background: #FFFFFF; color: #171717; font-family: Inter, system-ui, sans-serif">
+<aside style="flex: 1 0 248px; box-sizing: border-box; padding: 20px 14px; display: flex; flex-direction: column; gap: 18px; background: #F6F5F2">
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 6px">
+<div aria-hidden="true" style="width: 30px; height: 30px; border-radius: 9px; background: #D4213D; color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg></div>
+<span style="font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 17px">WAW Tasks</span>
+</div>
+<a href="QuickAdd.dc.html" style="height: 44px; border-radius: 12px; background: #D4213D; color: #FFFFFF; font-size: 15px; font-weight: 600; text-decoration: none; display: flex; align-items: center; justify-content: center">Add task</a>
+<nav aria-label="Views" style="display: flex; flex-direction: column; gap: 2px">
+<sc-for list="{{nav}}" as="n" hint-placeholder-count="3">
+<a href="{{n.href}}" style="display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 0 10px; border-radius: 10px; background: {{n.bg}}; color: #171717; font-size: 15px; font-weight: {{n.weight}}; text-decoration: none"><span>{{n.label}}</span><span style="font-size: 13px; color: #5C5C5C">{{n.count}}</span></a>
+</sc-for>
+</nav>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<span style="padding: 0 10px 4px; font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #5C5C5C">PROJECTS</span>
+<sc-for list="{{projects}}" as="p" hint-placeholder-count="3">
+<a href="Project.dc.html" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 10px; border-radius: 10px; background: {{p.bg}}; color: #171717; font-size: 15px; font-weight: {{p.weight}}; text-decoration: none"><span aria-hidden="true" style="width: 10px; height: 10px; border-radius: 3px; background: {{p.color}}"></span><span style="flex-grow: 1">{{p.name}}</span><span style="font-size: 13px; color: #5C5C5C">{{p.count}}</span></a>
+</sc-for>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="padding: 0 10px; font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #5C5C5C">LABELS</span>
+<div style="display: flex; flex-wrap: wrap; gap: 6px; padding: 0 6px">
+<sc-for list="{{labels}}" as="l" hint-placeholder-count="4">
+<a href="Search.dc.html" style="padding: 7px 10px; border-radius: 8px; background: {{l.bg}}; color: {{l.ink}}; font-size: 13px; font-weight: 500; text-decoration: none">{{l.name}}</a>
+</sc-for>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<span style="padding: 0 10px 4px; font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #5C5C5C">FILTERS</span>
+<sc-for list="{{filters}}" as="f" hint-placeholder-count="2">
+<a href="Search.dc.html" style="display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 0 10px; border-radius: 10px; color: #171717; font-size: 15px; text-decoration: none"><span>{{f.name}}</span><span style="font-size: 13px; color: #5C5C5C">{{f.count}}</span></a>
+</sc-for>
+</div>
+<a href="Settings.dc.html" style="margin-top: auto; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 10px; border-radius: 10px; color: #3D3D3D; font-size: 13px; font-weight: 500; text-decoration: none"><span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; background: #1F7A4D"></span>home-server · synced</a>
+</aside>
+<main style="flex: 999 1 520px; min-width: 0; box-sizing: border-box; padding: 32px 36px; display: flex; flex-direction: column; gap: 22px">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h1 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 30px; letter-spacing: -0.4px">Upcoming</h1>
+<span style="font-size: 14px; color: #5C5C5C">23 to 29 November · 6 tasks</span>
+</div>
+<div style="display: flex; align-items: center; gap: 8px">
+<button type="button" aria-label="Previous week" style="width: 44px; height: 44px; border: 1px solid #D9D6D0; border-radius: 12px; background: #FFFFFF; color: #171717; display: flex; align-items: center; justify-content: center; padding: 0"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></button>
+<button type="button" style="height: 44px; padding: 0 16px; border: 1px solid #D9D6D0; border-radius: 12px; background: #FFFFFF; color: #171717; font-family: inherit; font-size: 15px; font-weight: 500">This week</button>
+<button type="button" aria-label="Next week" style="width: 44px; height: 44px; border: 1px solid #D9D6D0; border-radius: 12px; background: #FFFFFF; color: #171717; display: flex; align-items: center; justify-content: center; padding: 0"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg></button>
+</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start">
+<sc-for list="{{days}}" as="d" hint-placeholder-count="7">
+<div style="flex: 1 1 140px; min-width: 0; display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 14px; background: #F6F5F2">
+<div style="display: flex; align-items: baseline; justify-content: space-between">
+<span style="font-size: 14px; font-weight: 600">{{d.name}}</span>
+<span style="font-size: 13px; color: #5C5C5C">{{d.note}}</span>
+</div>
+<sc-for list="{{d.tasks}}" as="t" hint-placeholder-count="1">
+<a href="Main.dc.html" style="display: flex; flex-direction: column; gap: 6px; padding: 10px; border: 1px solid #E4E2DD; border-radius: 10px; background: #FFFFFF; text-decoration: none; color: #171717">
+<span style="font-size: 14px; line-height: 20px">{{t.title}}</span>
+<span style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; color: #5C5C5C"><span><span style="font-weight: 600; color: {{t.pInk}}">{{t.p}}</span><span>{{t.meta}}</span></span><sc-for list="{{t.labels}}" as="l" hint-placeholder-count="1"><span style="padding: 2px 7px; border-radius: 6px; background: {{l.bg}}; color: {{l.ink}}; font-weight: 500">{{l.name}}</span></sc-for></span>
+<span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #5C5C5C"><span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 3px; background: {{t.projColor}}"></span>{{t.proj}}</span>
+</a>
+</sc-for>
+<a href="QuickAdd.dc.html" style="min-height: 44px; display: flex; align-items: center; font-size: 13px; font-weight: 500; text-decoration: none">Add task</a>
+</div>
+</sc-for>
+</div>
+<span style="font-size: 13px; color: #5C5C5C">Drag a task to another day to reschedule it.</span>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+function side(active) {
+var on = function (k) { return k === active; };
+return {
+nav: [['Inbox', '3', 'Main.dc.html'], ['Today', '5', 'Main.dc.html'], ['Upcoming', '', 'Upcoming.dc.html']].map(function (n) { return { label: n[0], count: n[1], href: n[2], bg: on(n[0]) ? '#FFFFFF' : 'transparent', weight: on(n[0]) ? 600 : 500 }; }),
+projects: [['Home', '5', '#D4213D'], ['Work', '9', '#1F5FBF'], ['Personal', '4', '#1F7A4D']].map(function (p) { return { name: p[0], count: p[1], color: p[2], bg: on(p[0]) ? '#FFFFFF' : 'transparent', weight: on(p[0]) ? 600 : 500 }; }),
+labels: [['@money', '#E2F0E8', '#1B6943'], ['@calls', '#DCE8F8', '#1F5FBF'], ['@waiting', '#F6E9CC', '#7A4F00'], ['@errands', '#E6DFF7', '#5B3FB5']].map(function (l) { return { name: l[0], bg: l[1], ink: l[2] }; }),
+filters: [{ name: 'Priority 1', count: '3' }, { name: 'This week at work', count: '5' }]
+};
+}
+var inks = { 1: '#B01A31', 2: '#8A5A00', 3: '#1F5FBF' };
+var projects = { Home: '#D4213D', Work: '#1F5FBF', Personal: '#1F7A4D' };
+var labelStyles = { money: ['#EEF6F1', '#1B6943'], calls: ['#EAF1FB', '#1F5FBF'], waiting: ['#FBF3E2', '#8A5A00'], errands: ['#F0ECFA', '#5B3FB5'] };
+function task(title, pr, meta, proj, labels) {
+return { title: title, p: pr < 4 ? 'P' + pr + (meta ? ' · ' : '') : '', pInk: inks[pr] || '#5C5C5C', meta: meta, proj: proj, projColor: projects[proj], labels: (labels || []).map(function (n) { return { name: '@' + n, bg: labelStyles[n][0], ink: labelStyles[n][1] }; }) };
+}
+var days = [
+{ name: 'Mon 23', note: 'Tomorrow', tasks: [task('Send the weekly report', 2, '10:00', 'Work', []), task('Electricity bill', 4, '', 'Home', ['money'])] },
+{ name: 'Tue 24', note: '', tasks: [task('Book the car service', 3, '', 'Personal', ['calls'])] },
+{ name: 'Wed 25', note: '', tasks: [] },
+{ name: 'Thu 26', note: '', tasks: [task('Prepare the release notes', 1, '15:00', 'Work', ['waiting'])] },
+{ name: 'Fri 27', note: '', tasks: [task('Team retro notes', 4, '', 'Work', [])] },
+{ name: 'Sat 28', note: '', tasks: [task('Fix the kitchen tap', 2, '', 'Home', ['calls'])] },
+{ name: 'Sun 29', note: '', tasks: [] }
+];
+return Object.assign(side('Upcoming'), { days: days });
+}
+}
+</script>
+</body>
+</html>

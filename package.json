@@ -1,0 +1,23 @@
+{
+	"name": "waw-tasks",
+	"private": true,
+	"type": "module",
+	"packageManager": "pnpm@12.21.0",
+	"engines": {
+		"node": ">=24.21.0"
+	},
+	"scripts": {
+		"build:shared": "pnpm --filter @waw/api-contract build",
+		"format:check": "biome format .",
+		"format": "biome format --write .",
+		"lint": "biome lint --error-on-warnings .",
+		"typecheck": "pnpm build:shared && pnpm -r --parallel run typecheck",
+		"test:unit": "pnpm build:shared && pnpm -r run test",
+		"build": "pnpm -r run build"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.6.8",
+		"typescript": "5.9.3",
+		"vitest": "^5.1.1"
+	}
+}

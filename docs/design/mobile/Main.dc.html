@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Today</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#B01A31}a:hover{color:#8C1427}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; padding: 56px 0 20px; display: flex; flex-direction: column; background: #FFFFFF; color: #171717; font-family: Inter, system-ui, sans-serif">
+<div style="display: flex; flex-direction: column; gap: 12px; padding: 0 20px 14px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h1 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 30px; letter-spacing: -0.4px">Today</h1>
+<span style="font-size: 14px; color: #5C5C5C">Sun 22 Nov · 5 tasks left</span>
+</div>
+<div style="display: flex; align-items: center; gap: 10px">
+<div role="img" aria-label="2 of 7 tasks done" style="flex-grow: 1; height: 6px; border-radius: 3px; background: #EEECE8"><div style="width: 29%; height: 6px; border-radius: 3px; background: #171717"></div></div>
+<span style="font-size: 13px; color: #5C5C5C">2 of 7 done</span>
+</div>
+</div>
+<div style="flex-grow: 1; display: flex; flex-direction: column; gap: 6px; padding: 0 20px 0 8px; overflow: hidden">
+<span style="padding-left: 12px; font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #B01A31">OVERDUE</span>
+<sc-for list="{{overdue}}" as="t" hint-placeholder-count="1">
+<div style="display: flex; align-items: flex-start; border-bottom: 1px solid #EEECE8">
+<label style="width: 44px; height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center"><input type="checkbox" aria-label="{{t.title}}" style="width: 22px; height: 22px; accent-color: #171717"></label>
+<a href="Task.dc.html" style="display: flex; flex-direction: column; gap: 3px; flex-grow: 1; min-width: 0; padding: 10px 0; text-decoration: none; color: #171717">
+<span style="font-size: 16px; line-height: 22px">{{t.title}}</span>
+<span style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; font-size: 13px; color: #5C5C5C"><span><span style="font-weight: 600; color: {{t.pInk}}">{{t.p}}</span><span>{{t.meta}}</span></span><sc-for list="{{t.labels}}" as="l" hint-placeholder-count="1"><span style="padding: 2px 8px; border-radius: 6px; background: {{l.bg}}; color: {{l.ink}}; font-weight: 500">{{l.name}}</span></sc-for><span style="margin-left: auto; display: flex; align-items: center; gap: 6px"><span>{{t.proj}}</span><span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 3px; background: {{t.projColor}}"></span></span></span>
+</a>
+</div>
+</sc-for>
+<span style="padding: 10px 0 0 12px; font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #5C5C5C">TODAY</span>
+<sc-for list="{{today}}" as="t" hint-placeholder-count="4">
+<div style="display: flex; align-items: flex-start; border-bottom: 1px solid #EEECE8">
+<label style="width: 44px; height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center"><input type="checkbox" aria-label="{{t.title}}" style="width: 22px; height: 22px; accent-color: #171717"></label>
+<a href="Task.dc.html" style="display: flex; flex-direction: column; gap: 3px; flex-grow: 1; min-width: 0; padding: 10px 0; text-decoration: none; color: #171717">
+<span style="font-size: 16px; line-height: 22px">{{t.title}}</span>
+<span style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; font-size: 13px; color: #5C5C5C"><span><span style="font-weight: 600; color: {{t.pInk}}">{{t.p}}</span><span>{{t.meta}}</span></span><sc-for list="{{t.labels}}" as="l" hint-placeholder-count="1"><span style="padding: 2px 8px; border-radius: 6px; background: {{l.bg}}; color: {{l.ink}}; font-weight: 500">{{l.name}}</span></sc-for><span style="margin-left: auto; display: flex; align-items: center; gap: 6px"><span>{{t.proj}}</span><span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 3px; background: {{t.projColor}}"></span></span></span>
+</a>
+</div>
+</sc-for>
+<button type="button" style="align-self: flex-start; height: 44px; margin-left: 12px; padding: 0; border: none; background: transparent; color: #5C5C5C; font-family: inherit; font-size: 14px; font-weight: 500">2 completed today · Show</button>
+</div>
+<a href="QuickAdd.dc.html" aria-label="Add task" style="position: absolute; right: 20px; bottom: 96px; width: 56px; height: 56px; border-radius: 18px; background: #D4213D; color: #FFFFFF; display: flex; align-items: center; justify-content: center">
+<svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+</a>
+<nav aria-label="Main" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 6px 12px 0; border-top: 1px solid #EEECE8">
+<sc-for list="{{tabs}}" as="tab" hint-placeholder-count="4">
+<a href="{{tab.href}}" style="height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: {{tab.ink}}; font-size: 11px; font-weight: {{tab.weight}}">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="{{tab.d}}"></path></svg>
+<span>{{tab.label}}</span>
+</a>
+</sc-for>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+var inks = { 1: '#B01A31', 2: '#8A5A00', 3: '#1F5FBF' };
+var projects = { Home: '#D4213D', Work: '#1F5FBF', Personal: '#1F7A4D' };
+var labelStyles = { money: ['#EEF6F1', '#1B6943'], calls: ['#EAF1FB', '#1F5FBF'], waiting: ['#FBF3E2', '#8A5A00'], errands: ['#F0ECFA', '#5B3FB5'] };
+function task(title, pr, meta, proj, labels) {
+return { title: title, p: pr < 4 ? 'P' + pr + (meta ? ' · ' : '') : '', pInk: inks[pr] || '#5C5C5C', meta: meta, proj: proj || '', projColor: proj ? projects[proj] : 'transparent', labels: (labels || []).map(function (n) { return { name: '@' + n, bg: labelStyles[n][0], ink: labelStyles[n][1] }; }) };
+}
+var tabs = [
+['Today', 'Main.dc.html', 'M6 5h12a2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2z M4 10h16 M9 3v4 M15 3v4'],
+['Upcoming', 'Upcoming.dc.html', 'M4 7h16 M4 12h16 M4 17h9'],
+['Search', 'Search.dc.html', 'M11 4a7 7 0 100 14 7 7 0 000-14z M20 20l-4-4'],
+['Browse', 'Browse.dc.html', 'M4 5h7v7H4z M13 5h7v7h-7z M4 14h7v5H4z M13 14h7v5h-7z']
+].map(function (t) {
+var on = t[0] === 'Today';
+return { label: t[0], href: t[1], d: t[2], ink: on ? '#D4213D' : '#5C5C5C', weight: on ? 600 : 500 };
+});
+return {
+tabs: tabs,
+overdue: [task('Send the invoice to the client', 1, 'Fri', 'Work', [])],
+today: [
+task('Pay rent', 1, '09:00 · repeats monthly', 'Home', ['money']),
+task('Review the pull request', 2, '', 'Work', []),
+task('Buy milk', 4, '17:00', 'Home', ['errands']),
+task('Call the dentist', 4, '0 of 2 subtasks', 'Personal', ['calls'])
+]
+};
+}
+}
+</script>
+</body>
+</html>

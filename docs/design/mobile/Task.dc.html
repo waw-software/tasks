@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Task details</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#B01A31}a:hover{color:#8C1427}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; padding: 56px 20px 24px; display: flex; flex-direction: column; gap: 14px; background: #FFFFFF; color: #171717; font-family: Inter, system-ui, sans-serif">
+<div style="display: flex; align-items: center; gap: 6px; margin-left: -8px">
+<a href="Main.dc.html" aria-label="Back" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: #171717">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+</a>
+<a href="Project.dc.html" style="flex-grow: 1; display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; color: #3D3D3D; text-decoration: none; padding: 12px 0"><span aria-hidden="true" style="width: 10px; height: 10px; border-radius: 3px; background: #D4213D"></span>Home / Bills</a>
+<button type="button" aria-label="More actions" style="width: 44px; height: 44px; border: none; background: transparent; color: #171717; display: flex; align-items: center; justify-content: center; padding: 0">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h.01M12 12h.01M19 12h.01"></path></svg>
+</button>
+</div>
+<div style="display: flex; align-items: flex-start; gap: 4px; margin-left: -10px">
+<label style="width: 44px; height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center"><input type="checkbox" aria-label="Complete: Pay rent" style="width: 24px; height: 24px; accent-color: #171717"></label>
+<div style="display: flex; flex-direction: column; gap: 6px; padding-top: 6px">
+<h1 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 26px; line-height: 32px; letter-spacing: -0.3px">Pay rent</h1>
+<p style="margin: 0; font-size: 15px; line-height: 22px; color: #5C5C5C">Transfer to the landlord's account and keep the confirmation.</p>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; border: 1px solid #E4E2DD; border-radius: 14px">
+<sc-for list="{{fields}}" as="f" hint-placeholder-count="4">
+<button type="button" style="display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 0 14px; border: none; border-bottom: 1px solid #EEECE8; background: transparent; font-family: inherit; text-align: left; color: #171717">
+<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5C5C5C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0"><path d="{{f.d}}"></path></svg>
+<span style="font-size: 14px; color: #5C5C5C; width: 76px; flex-shrink: 0">{{f.label}}</span>
+<span style="padding: {{f.pad}}; border-radius: 6px; background: {{f.bg}}; font-size: 15px; font-weight: 500; color: {{f.ink}}">{{f.value}}</span>
+</button>
+</sc-for>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<span style="font-size: 12px; font-weight: 600; letter-spacing: 0.4px; color: #5C5C5C">SUBTASKS · 1 OF 3</span>
+<div style="display: flex; align-items: center; margin-left: -10px">
+<label style="width: 44px; height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center"><input id="s1" type="checkbox" checked style="width: 22px; height: 22px; accent-color: #171717"></label>
+<label for="s1" style="font-size: 15px; color: #5C5C5C; text-decoration: line-through">Check the amount</label>
+</div>
+<div style="display: flex; align-items: center; margin-left: -10px">
+<label style="width: 44px; height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center"><input id="s2" type="checkbox" style="width: 22px; height: 22px; accent-color: #171717"></label>
+<label for="s2" style="font-size: 15px">Make the transfer</label>
+</div>
+<div style="display: flex; align-items: center; margin-left: -10px">
+<label style="width: 44px; height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center"><input id="s3" type="checkbox" style="width: 22px; height: 22px; accent-color: #171717"></label>
+<label for="s3" style="font-size: 15px">Save the confirmation</label>
+</div>
+<button type="button" style="align-self: flex-start; height: 44px; padding: 0; border: none; background: transparent; color: #B01A31; font-family: inherit; font-size: 15px; font-weight: 500; display: flex; align-items: center; gap: 8px">
+<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+<span>Add subtask</span>
+</button>
+</div>
+<span style="margin-top: auto; font-size: 13px; color: #5C5C5C">Repeats monthly · next on Tue 1 Dec</span>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+var fields = [
+['Due', 'Every month on the 1st, 09:00', '#171717', 'M6 5h12a2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2z M4 10h16 M9 3v4 M15 3v4'],
+['Priority', 'Priority 1', '#B01A31', 'M5 21V4 M5 4h13l-3 4.5 3 4.5H5'],
+['Labels', '@money', '#1B6943', 'M4 4h8l8 8-8 8-8-8z M8.5 8.5v.01'],
+['Reminder', '1 day before', '#171717', 'M6 17V11a6 6 0 0112 0v6l2 2H4z M10 21h4']
+].map(function (f) { var tag = f[0] === 'Labels'; return { label: f[0], value: f[1], ink: f[2], d: f[3], bg: tag ? '#EEF6F1' : 'transparent', pad: tag ? '3px 9px' : '0' }; });
+return { fields: fields };
+}
+}
+</script>
+</body>
+</html>
