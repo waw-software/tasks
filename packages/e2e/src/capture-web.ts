@@ -48,7 +48,10 @@ async function waitForReady(
 			);
 		}
 		try {
-			const response = await fetch(`${BASE_URL}/`);
+			// Bounded, so a server that never answers cannot outlive the deadline or hide an exit.
+			const response = await fetch(`${BASE_URL}/`, {
+				signal: AbortSignal.timeout(POLL_MS * 4),
+			});
 			// The preview's own "Local: http://127.0.0.1:4174/" line proves the 200 comes from it,
 			// not from another server that already holds the port.
 			if (
