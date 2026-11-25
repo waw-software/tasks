@@ -132,6 +132,12 @@ test("DESIGN §2–3 radii, spacing and sizes", () => {
 		bannerInline: 14,
 		bannerGap: 8,
 		bannerCopyGap: 2,
+		segmentGap: 8,
+		swatchGap: 10,
+		optionGap: 12,
+		optionInline: 14,
+		swatchLabelGap: 10,
+		segmentIconGap: 4,
 	});
 	expect(theme.size).toEqual({
 		touchTarget: 44,
@@ -153,5 +159,9 @@ test("DESIGN §2–3 radii, spacing and sizes", () => {
 		desktopInput: 50,
 		controlBorder: 1,
 		focusRing: 2,
+		segmentMobile: 72,
+		optionRow: 50,
+		radioDot: 12,
+		pickerMark: 16,
 	});
 });
