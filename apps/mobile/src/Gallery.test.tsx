@@ -82,4 +82,73 @@ describe("Gallery", () => {
 
 		expect(onBack).toHaveBeenCalledTimes(1);
 	});
+
+	it("Task rows calls onOpenRows", async () => {
+		const onOpenRows = jest.fn();
+		await render(<Gallery onBack={jest.fn()} onOpenRows={onOpenRows} />);
+
+		await fireEvent.press(screen.getByRole("button", { name: "Task rows" }));
+
+		expect(onOpenRows).toHaveBeenCalledTimes(1);
+	});
+
+	it("the rows page shows controlled checkbox examples", async () => {
+		await render(<Gallery section="rows" onBack={jest.fn()} />);
+
+		expect(
+			screen.getByRole("header", { name: "Task row gallery" }),
+		).toBeOnTheScreen();
+		for (const name of ["Unchecked example", "Checked example"]) {
+			expect(screen.getByText(name)).toBeOnTheScreen();
+		}
+		const unchecked = () =>
+			screen.getByRole("checkbox", { name: "Unchecked example" });
+		const checked = () =>
+			screen.getByRole("checkbox", { name: "Checked example" });
+		expect(unchecked().props.accessibilityState).toMatchObject({
+			checked: false,
+		});
+		expect(checked().props.accessibilityState).toMatchObject({
+			checked: true,
+		});
+
+		await fireEvent.press(unchecked());
+
+		expect(unchecked().props.accessibilityState).toMatchObject({
+			checked: true,
+		});
+
+		await fireEvent.press(checked());
+
+		expect(checked().props.accessibilityState).toMatchObject({
+			checked: false,
+		});
+	});
+
+	it("the rows page shows the task row fixtures", async () => {
+		await render(<Gallery section="rows" onBack={jest.fn()} />);
+
+		for (const title of [
+			"Pay rent",
+			"Review the pull request",
+			"Buy milk",
+			"Pick up the dry cleaning",
+			"Call the landlord about the broken heating in the bathroom before the weekend",
+		]) {
+			expect(screen.getByText(title)).toBeOnTheScreen();
+		}
+		expect(screen.queryByText(/P4/)).toBeNull();
+		expect(screen.getByText(/1 of 3 subtasks/)).toBeOnTheScreen();
+		expect(screen.getByText("not synced yet")).toBeOnTheScreen();
+		expect(
+			screen.getByText("Review the pull request").props.accessibilityState,
+		).toMatchObject({ selected: true });
+		expect(screen.getByRole("checkbox", { name: "Buy milk" })).toBeChecked();
+		const payRent = () => screen.getByRole("checkbox", { name: "Pay rent" });
+		expect(payRent()).not.toBeChecked();
+
+		await fireEvent.press(payRent());
+
+		expect(payRent()).toBeChecked();
+	});
 });

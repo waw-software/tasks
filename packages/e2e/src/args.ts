@@ -12,11 +12,13 @@ export type FsChecks = {
 	isIgnored(repoRelativeDir: string): boolean;
 };
 
+const galleryHashes: readonly string[] = ["#/gallery", "#/gallery/rows"];
+
 export function needsGalleryBuild(screens: readonly Screen[]): boolean {
 	return screens.some(
 		(s) =>
-			(s.surface === "web" && s.route.includes("#/gallery")) ||
-			(s.surface === "electron" && s.hash === "#/gallery"),
+			(s.surface === "web" && galleryHashes.some((h) => s.route === `/${h}`)) ||
+			(s.surface === "electron" && galleryHashes.includes(s.hash ?? "")),
 	);
 }
 

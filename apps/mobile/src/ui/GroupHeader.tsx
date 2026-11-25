@@ -1,5 +1,6 @@
 import { theme } from "@waw/design-tokens";
 import { StyleSheet, Text } from "react-native";
+import { fontFamilies } from "../fonts";
 
 export type GroupHeaderProps = {
 	label: string;
@@ -27,7 +28,7 @@ export function GroupHeader({
 const styles = StyleSheet.create({
 	header: {
 		fontSize: theme.type.group,
-		fontWeight: "600",
+		fontFamily: fontFamilies.bodySemibold,
 		letterSpacing: theme.type.groupLetterSpacing,
 		color: theme.color.muted,
 	},

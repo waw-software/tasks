@@ -1,10 +1,22 @@
 import { act, fireEvent, render, screen } from "@testing-library/react-native";
 import { Linking } from "react-native";
-import App from "./App";
+import App, { galleryRoute } from "./App";
+
+const mockUseAppFonts = jest.fn<[boolean, Error | null], []>();
+
+jest.mock("./src/fonts", () => ({
+	...jest.requireActual("./src/fonts"),
+	useAppFonts: () => mockUseAppFonts(),
+}));
 
 const galleryUrl = "exp://127.0.0.1:8081/--/gallery";
+const rowsUrl = "exp://127.0.0.1:8081/--/gallery/rows";
 
 describe("App", () => {
+	beforeEach(() => {
+		mockUseAppFonts.mockReturnValue([true, null]);
+	});
+
 	afterEach(() => {
 		jest.restoreAllMocks();
 		// The preset's Linking methods are already mocks, which restoring leaves as they are.
@@ -81,5 +93,115 @@ describe("App", () => {
 		expect(
 			screen.getByRole("header", { name: "Component gallery" }),
 		).toBeOnTheScreen();
+	});
+
+	it("REQ-001 AC-04: the gallery opens Task rows and Back returns to the gallery", async () => {
+		await render(<App />);
+		await fireEvent.press(
+			screen.getByRole("button", { name: "Component gallery" }),
+		);
+
+		await fireEvent.press(screen.getByRole("button", { name: "Task rows" }));
+
+		expect(
+			screen.getByRole("header", { name: "Task row gallery" }),
+		).toBeOnTheScreen();
+
+		await fireEvent.press(screen.getByRole("button", { name: "Back" }));
+
+		expect(
+			screen.getByRole("header", { name: "Component gallery" }),
+		).toBeOnTheScreen();
+
+		await fireEvent.press(screen.getByRole("button", { name: "Back" }));
+
+		expect(screen.getByRole("header", { name: "WAW Tasks" })).toBeOnTheScreen();
+	});
+
+	it("REQ-001 AC-04: the rows link opens Task rows in development only", async () => {
+		jest.spyOn(Linking, "getInitialURL").mockResolvedValue(rowsUrl);
+		const dev = await render(<App />);
+
+		expect(
+			await screen.findByRole("header", { name: "Task row gallery" }),
+		).toBeOnTheScreen();
+
+		await dev.unmount();
+		const globals = globalThis as unknown as { __DEV__: boolean };
+		const wasDev = globals.__DEV__;
+		globals.__DEV__ = false;
+		try {
+			const release = await render(<App />);
+
+			expect(
+				screen.getByRole("header", { name: "WAW Tasks" }),
+			).toBeOnTheScreen();
+			expect(
+				screen.queryByRole("header", { name: "Task row gallery" }),
+			).toBeNull();
+			await release.unmount();
+		} finally {
+			globals.__DEV__ = wasDev;
+		}
+
+		jest.spyOn(Linking, "getInitialURL").mockResolvedValue(null);
+		const listen = jest.spyOn(Linking, "addEventListener");
+		await render(<App />);
+		const onUrl = listen.mock.lastCall?.[1];
+		if (!onUrl) {
+			throw new Error("the app does not listen for links");
+		}
+
+		await act(() =>
+			onUrl({ url: "exp://127.0.0.1:8081/?next=/--/gallery/rows" }),
+		);
+
+		expect(screen.getByRole("header", { name: "WAW Tasks" })).toBeOnTheScreen();
+
+		await act(() => onUrl({ url: rowsUrl }));
+
+		expect(
+			screen.getByRole("header", { name: "Task row gallery" }),
+		).toBeOnTheScreen();
+	});
+
+	it("REQ-001 AC-04: only the exact gallery paths are gallery routes", () => {
+		expect(galleryRoute(galleryUrl)).toBe("components");
+		expect(galleryRoute(rowsUrl)).toBe("rows");
+		expect(galleryRoute(`${rowsUrl}?from=test#top`)).toBe("rows");
+		for (const url of [
+			"exp://127.0.0.1:8081/--/gallery/rowsx",
+			"exp://127.0.0.1:8081/--/gallery/rows/more",
+			"exp://127.0.0.1:8081/?next=/--/gallery/rows",
+			"exp://127.0.0.1:8081/#/--/gallery",
+			"not a url",
+			null,
+		]) {
+			expect(galleryRoute(url)).toBeNull();
+		}
+	});
+
+	it("REQ-001 AC-04: the shell waits for the fonts and starts when they load or fail", async () => {
+		const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+		mockUseAppFonts.mockReturnValue([false, null]);
+		const app = await render(<App />);
+
+		expect(screen.queryByRole("header", { name: "WAW Tasks" })).toBeNull();
+
+		mockUseAppFonts.mockReturnValue([true, null]);
+		await app.rerender(<App />);
+
+		expect(screen.getByRole("header", { name: "WAW Tasks" })).toBeOnTheScreen();
+		expect(warn).not.toHaveBeenCalled();
+
+		await app.unmount();
+		const error = new Error("font unavailable");
+		mockUseAppFonts.mockReturnValue([false, error]);
+		const failed = await render(<App />);
+		await failed.rerender(<App />);
+
+		expect(screen.getByRole("header", { name: "WAW Tasks" })).toBeOnTheScreen();
+		expect(warn).toHaveBeenCalledTimes(1);
+		expect(warn).toHaveBeenCalledWith(expect.any(String), error);
 	});
 });

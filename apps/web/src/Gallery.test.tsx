@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, expect, test } from "vitest";
 import Gallery from "./Gallery.tsx";
 
@@ -81,4 +81,48 @@ test("progress bars expose done of total and hide a zero total", () => {
 	]);
 	expect(screen.getByText("2 of 7 done")).toBeDefined();
 	expect(screen.queryByText("0 of 0 done")).toBeNull();
+});
+
+function checkbox(name: string) {
+	return screen.getByRole<HTMLInputElement>("checkbox", { name });
+}
+
+test("the rows page shows controlled checkbox examples", () => {
+	render(<Gallery section="rows" />);
+
+	expect(checkbox("Unchecked example").checked).toBe(false);
+	expect(checkbox("Checked example").checked).toBe(true);
+
+	fireEvent.click(checkbox("Unchecked example"));
+
+	expect(checkbox("Unchecked example").checked).toBe(true);
+});
+
+test("the rows page shows the task row fixtures", () => {
+	render(<Gallery section="rows" />);
+
+	for (const title of [
+		"Pay rent",
+		"Review the pull request",
+		"Buy milk",
+		"Pick up the dry cleaning",
+		"Call the landlord about the broken heating in the bathroom before the weekend",
+	]) {
+		expect(screen.getByText(title)).toBeDefined();
+	}
+	expect(screen.queryByText("P4")).toBeNull();
+	expect(screen.getByText(/1 of 3 subtasks/)).toBeDefined();
+	expect(screen.getByText("not synced yet")).toBeDefined();
+	expect(
+		screen
+			.getByText("Review the pull request")
+			.closest('[data-part="row"]')
+			?.getAttribute("aria-current"),
+	).toBe("true");
+	expect(checkbox("Buy milk").checked).toBe(true);
+	expect(checkbox("Pay rent").checked).toBe(false);
+
+	fireEvent.click(checkbox("Pay rent"));
+
+	expect(checkbox("Pay rent").checked).toBe(true);
 });

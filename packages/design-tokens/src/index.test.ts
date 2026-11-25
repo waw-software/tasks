@@ -93,6 +93,7 @@ test("DESIGN §2 type roles, fonts and weights", () => {
 		groupLetterSpacing: 0.4,
 		tab: 11,
 		chip: 13,
+		taskTitleLineHeight: 22,
 	});
 });
 
@@ -108,12 +109,18 @@ test("DESIGN §2–3 radii, spacing and sizes", () => {
 		overlayMax: 18,
 		pill: 999,
 		projectMarker: 3,
+		checkbox: 3,
 	});
 	expect(theme.space).toEqual({
 		mainBlock: 32,
 		mainInline: 36,
 		chipBlock: 2,
 		chipInline: 8,
+		taskRowBlock: 10,
+		taskRowTitleGap: 3,
+		taskRowMetaRowGap: 6,
+		taskRowMetaColumnGap: 8,
+		taskRowProjectGap: 6,
 	});
 	expect(theme.size).toEqual({
 		touchTarget: 44,

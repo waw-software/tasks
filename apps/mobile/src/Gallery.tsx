@@ -1,10 +1,13 @@
 import { type LabelColor, type ProjectColor, theme } from "@waw/design-tokens";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { fontFamilies } from "./fonts";
+import { Checkbox } from "./ui/Checkbox";
 import { GroupHeader } from "./ui/GroupHeader";
 import { LabelChip, type LabelChipProps } from "./ui/LabelChip";
 import { ProgressBar } from "./ui/ProgressBar";
 import { ProjectMarker } from "./ui/ProjectMarker";
+import { TaskRow, type TaskRowProps } from "./ui/TaskRow";
 
 const projects: readonly { color: ProjectColor; name: string }[] = [
 	{ color: "red", name: "Home" },
@@ -22,7 +25,71 @@ const labels: readonly { color: LabelColor; name: string }[] = [
 	{ color: "violet", name: "@errands" },
 ];
 
-export default function Gallery({ onBack }: { onBack: () => void }) {
+type RowFixture = Omit<TaskRowProps, "checked" | "onCheckedChange"> & {
+	initiallyChecked?: boolean;
+};
+
+const rows: readonly RowFixture[] = [
+	{
+		title: "Pay rent",
+		priority: 1,
+		scheduleText: "09:00 · repeats monthly",
+		labels: [
+			{ name: "@money", color: "green" },
+			{ name: "@waiting", color: "amber" },
+		],
+		project: { name: "Home", color: "red" },
+	},
+	{
+		title: "Review the pull request",
+		priority: 2,
+		selected: true,
+		project: { name: "Work", color: "blue" },
+	},
+	{
+		title: "Buy milk",
+		priority: 4,
+		initiallyChecked: true,
+		scheduleText: "17:00",
+		labels: [{ name: "@errands", color: "violet" }],
+		project: { name: "Home", color: "red" },
+	},
+	{
+		title: "Pick up the dry cleaning",
+		priority: 3,
+		pendingSync: true,
+		subtasks: { done: 1, total: 3 },
+		labels: [{ name: "@waiting", color: "amber" }],
+		project: { name: "Personal", color: "green" },
+	},
+	{
+		title:
+			"Call the landlord about the broken heating in the bathroom before the weekend",
+		priority: 2,
+		scheduleText: "Tomorrow · 18:30",
+		labels: [
+			{ name: "@calls", color: "blue" },
+			{ name: "@waiting", color: "amber" },
+			{ name: "@waiting-for-the-building-management-company", color: "violet" },
+		],
+		project: {
+			name: "Apartment renovation and kitchen repairs before the winter holidays",
+			color: "amber",
+		},
+	},
+];
+
+export type GallerySection = "components" | "rows";
+
+export default function Gallery({
+	section = "components",
+	onBack,
+	onOpenRows,
+}: {
+	section?: GallerySection;
+	onBack: () => void;
+	onOpenRows?: () => void;
+}) {
 	return (
 		<ScrollView
 			contentInsetAdjustmentBehavior="automatic"
@@ -38,9 +105,30 @@ export default function Gallery({ onBack }: { onBack: () => void }) {
 				<Text style={styles.backText}>Back</Text>
 			</Pressable>
 			<Text accessibilityRole="header" style={styles.title}>
-				Component gallery
+				{section === "rows" ? "Task row gallery" : "Component gallery"}
 			</Text>
 
+			{section === "rows" ? (
+				<RowExamples />
+			) : (
+				<>
+					<Pressable
+						accessibilityRole="button"
+						onPress={onOpenRows}
+						style={styles.link}
+					>
+						<Text style={styles.linkText}>Task rows</Text>
+					</Pressable>
+					<ComponentExamples />
+				</>
+			)}
+		</ScrollView>
+	);
+}
+
+function ComponentExamples() {
+	return (
+		<>
 			<Section caption="Project markers">
 				{projects.map(({ color, name }) => (
 					<View key={color} style={styles.project}>
@@ -71,8 +159,50 @@ export default function Gallery({ onBack }: { onBack: () => void }) {
 				<ProgressBar done={0} total={0} />
 				<Text style={styles.caption}>0 of 0: hidden</Text>
 			</Section>
-		</ScrollView>
+		</>
 	);
+}
+
+function RowExamples() {
+	return (
+		<>
+			<Section caption="Checkbox">
+				<CheckboxExample label="Unchecked example" />
+				<CheckboxExample label="Checked example" initiallyChecked />
+			</Section>
+
+			<Section caption="Task rows">
+				<View>
+					{rows.map((row) => (
+						<RowExample key={row.title} {...row} />
+					))}
+				</View>
+			</Section>
+		</>
+	);
+}
+
+function CheckboxExample({
+	label,
+	initiallyChecked = false,
+}: {
+	label: string;
+	initiallyChecked?: boolean;
+}) {
+	const [checked, setChecked] = useState(initiallyChecked);
+
+	return (
+		<View style={styles.example}>
+			<Checkbox checked={checked} label={label} onCheckedChange={setChecked} />
+			<Text style={styles.exampleLabel}>{label}</Text>
+		</View>
+	);
+}
+
+function RowExample({ initiallyChecked = false, ...row }: RowFixture) {
+	const [checked, setChecked] = useState(initiallyChecked);
+
+	return <TaskRow {...row} checked={checked} onCheckedChange={setChecked} />;
 }
 
 function Section({
@@ -115,19 +245,41 @@ const styles = StyleSheet.create({
 		minWidth: theme.size.touchTarget,
 		minHeight: theme.size.touchTarget,
 	},
+	link: {
+		alignSelf: "flex-start",
+		justifyContent: "center",
+		minHeight: theme.size.touchTarget,
+	},
+	linkText: {
+		fontFamily: fontFamilies.bodyRegular,
+		fontSize: theme.type.bodyMax,
+		color: theme.color["accent-text"],
+	},
+	example: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: theme.space.chipInline,
+	},
+	exampleLabel: {
+		fontFamily: fontFamilies.bodyRegular,
+		fontSize: theme.type.bodyMin,
+		color: theme.color.ink,
+	},
 	backText: {
+		fontFamily: fontFamilies.bodyRegular,
 		fontSize: theme.type.bodyMax,
 		color: theme.color["accent-text"],
 	},
 	title: {
 		fontSize: theme.type.screen,
-		fontWeight: "600",
+		fontFamily: fontFamilies.headingSemibold,
 		color: theme.color.ink,
 	},
 	section: {
 		gap: theme.space.chipInline,
 	},
 	caption: {
+		fontFamily: fontFamilies.bodyRegular,
 		fontSize: theme.type.meta,
 		color: theme.color.muted,
 	},
@@ -137,6 +289,7 @@ const styles = StyleSheet.create({
 		gap: theme.space.chipInline,
 	},
 	projectName: {
+		fontFamily: fontFamilies.bodyRegular,
 		fontSize: theme.type.bodyMin,
 		color: theme.color.ink,
 	},

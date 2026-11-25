@@ -60,4 +60,28 @@ export const screens: readonly Screen[] = [
 		mockup: null,
 	},
 	{ id: "gallery.ios", surface: "ios", mockup: null },
+	{
+		id: "gallery-rows.web-390",
+		surface: "web",
+		route: "/#/gallery/rows",
+		viewport: { width: 390, height: 844 },
+		readyHeading: "Task row gallery",
+		mockup: null,
+	},
+	{
+		id: "gallery-rows.web-1440",
+		surface: "web",
+		route: "/#/gallery/rows",
+		viewport: { width: 1440, height: 900 },
+		readyHeading: "Task row gallery",
+		mockup: null,
+	},
+	{
+		id: "gallery-rows.electron",
+		surface: "electron",
+		hash: "#/gallery/rows",
+		readyHeading: "Task row gallery",
+		mockup: null,
+	},
+	{ id: "gallery-rows.ios", surface: "ios", mockup: null },
 ];
