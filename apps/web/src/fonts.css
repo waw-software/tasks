@@ -1,0 +1,16 @@
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/space-grotesk/500.css";
+@import "@fontsource/space-grotesk/600.css";
+
+body {
+	margin: 0;
+	font-family: Inter, system-ui, sans-serif;
+}
+
+h1,
+h2 {
+	font-family: "Space Grotesk", system-ui, sans-serif;
+	font-weight: 600;
+}

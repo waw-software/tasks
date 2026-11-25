@@ -115,6 +115,7 @@ export const theme = {
 		groupLetterSpacing: 0.4,
 		tab: 11,
 		chip: 13,
+		taskTitleLineHeight: 22,
 	},
 	radius: {
 		chip: 6,
@@ -127,12 +128,18 @@ export const theme = {
 		overlayMax: 18,
 		pill: 999,
 		projectMarker: 3,
+		checkbox: 3,
 	},
 	space: {
 		mainBlock: 32,
 		mainInline: 36,
 		chipBlock: 2,
 		chipInline: 8,
+		taskRowBlock: 10,
+		taskRowTitleGap: 3,
+		taskRowMetaRowGap: 6,
+		taskRowMetaColumnGap: 8,
+		taskRowProjectGap: 6,
 	},
 	size: {
 		touchTarget: 44,

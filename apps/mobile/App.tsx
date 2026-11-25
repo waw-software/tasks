@@ -2,6 +2,7 @@ import { theme } from "@waw/design-tokens";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
+import { fontFamilies, useAppFonts } from "./src/fonts";
 import Gallery from "./src/Gallery";
 
 export function isGalleryUrl(url: string | null): boolean {
@@ -10,6 +11,13 @@ export function isGalleryUrl(url: string | null): boolean {
 
 export default function App() {
 	const [screen, setScreen] = useState<"shell" | "gallery">("shell");
+	const [fontsLoaded, fontError] = useAppFonts();
+
+	useEffect(() => {
+		if (fontError) {
+			console.warn("Fonts failed to load", fontError);
+		}
+	}, [fontError]);
 
 	useEffect(() => {
 		if (!__DEV__) {
@@ -27,6 +35,10 @@ export default function App() {
 		return () => subscription.remove();
 	}, []);
 
+	if (!fontsLoaded && !fontError) {
+		return null;
+	}
+
 	if (screen === "gallery") {
 		return (
 			<>
@@ -38,7 +50,9 @@ export default function App() {
 
 	return (
 		<View style={styles.container}>
-			<Text accessibilityRole="header">WAW Tasks</Text>
+			<Text accessibilityRole="header" style={fontsLoaded && styles.heading}>
+				WAW Tasks
+			</Text>
 			{__DEV__ && (
 				<Pressable
 					accessibilityRole="button"
@@ -58,6 +72,9 @@ const styles = StyleSheet.create({
 		flex: 1,
 		alignItems: "center",
 		justifyContent: "center",
+	},
+	heading: {
+		fontFamily: fontFamilies.headingSemibold,
 	},
 	galleryButton: {
 		justifyContent: "center",

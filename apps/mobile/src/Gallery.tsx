@@ -1,6 +1,7 @@
 import { type LabelColor, type ProjectColor, theme } from "@waw/design-tokens";
 import type { ReactNode } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { fontFamilies } from "./fonts";
 import { GroupHeader } from "./ui/GroupHeader";
 import { LabelChip, type LabelChipProps } from "./ui/LabelChip";
 import { ProgressBar } from "./ui/ProgressBar";
@@ -116,18 +117,20 @@ const styles = StyleSheet.create({
 		minHeight: theme.size.touchTarget,
 	},
 	backText: {
+		fontFamily: fontFamilies.bodyRegular,
 		fontSize: theme.type.bodyMax,
 		color: theme.color["accent-text"],
 	},
 	title: {
 		fontSize: theme.type.screen,
-		fontWeight: "600",
+		fontFamily: fontFamilies.headingSemibold,
 		color: theme.color.ink,
 	},
 	section: {
 		gap: theme.space.chipInline,
 	},
 	caption: {
+		fontFamily: fontFamilies.bodyRegular,
 		fontSize: theme.type.meta,
 		color: theme.color.muted,
 	},
@@ -137,6 +140,7 @@ const styles = StyleSheet.create({
 		gap: theme.space.chipInline,
 	},
 	projectName: {
+		fontFamily: fontFamilies.bodyRegular,
 		fontSize: theme.type.bodyMin,
 		color: theme.color.ink,
 	},

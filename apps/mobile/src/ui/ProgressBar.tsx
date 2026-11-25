@@ -1,5 +1,6 @@
 import { theme } from "@waw/design-tokens";
 import { StyleSheet, Text, View } from "react-native";
+import { fontFamilies } from "../fonts";
 
 export type ProgressBarProps = { done: number; total: number };
 
@@ -42,6 +43,7 @@ const styles = StyleSheet.create({
 		backgroundColor: theme.color.ink,
 	},
 	text: {
+		fontFamily: fontFamilies.bodyRegular,
 		fontSize: theme.type.meta,
 		color: theme.color.muted,
 	},

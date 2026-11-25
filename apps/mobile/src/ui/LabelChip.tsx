@@ -1,5 +1,6 @@
 import { type LabelColor, theme } from "@waw/design-tokens";
 import { StyleSheet, Text, View } from "react-native";
+import { fontFamilies } from "../fonts";
 
 export type LabelChipProps = {
 	name: string;
@@ -28,6 +29,6 @@ const styles = StyleSheet.create({
 	},
 	name: {
 		fontSize: theme.type.chip,
-		fontWeight: "500",
+		fontFamily: fontFamilies.bodyMedium,
 	},
 });
