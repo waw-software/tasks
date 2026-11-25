@@ -70,9 +70,12 @@ const rows: readonly RowFixture[] = [
 		labels: [
 			{ name: "@calls", color: "blue" },
 			{ name: "@waiting", color: "amber" },
-			{ name: "@errands", color: "violet" },
+			{ name: "@waiting-for-the-building-management-company", color: "violet" },
 		],
-		project: { name: "Apartment renovation", color: "amber" },
+		project: {
+			name: "Apartment renovation and kitchen repairs before the winter holidays",
+			color: "amber",
+		},
 	},
 ];
 
