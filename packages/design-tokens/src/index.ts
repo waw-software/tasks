@@ -28,6 +28,8 @@ type ColorKey =
 	| "warning-on-surface"
 	| "warning-tint";
 
+type OverlayKey = "scrim" | "dialogShadow";
+
 type LabelColors = Readonly<{
 	bg: string;
 	ink: string;
@@ -118,6 +120,7 @@ export const theme = {
 		taskTitleLineHeight: 22,
 		controlSupport: 14,
 		sidebarWordmark: 17,
+		detailTitle: 24,
 	},
 	radius: {
 		chip: 6,
@@ -171,6 +174,13 @@ export const theme = {
 		sidebarRowGap: 2,
 		sidebarRowInline: 10,
 		sidebarChipGap: 6,
+		dialogInset: 24,
+		dialogPadding: 24,
+		overlayGap: 16,
+		sheetPadding: 20,
+		sheetBottom: 28,
+		detailPadding: 28,
+		detailBottom: 32,
 	},
 	size: {
 		touchTarget: 44,
@@ -202,10 +212,18 @@ export const theme = {
 		sidebarWordmarkMark: 30,
 		sidebarWordmarkIcon: 16,
 		serverStatusDot: 8,
+		detailPreferred: 380,
+		dialogMax: 600,
+		sheetMaxHeightPercent: 92,
+	},
+	overlay: {
+		scrim: "rgba(23,23,23,0.45)",
+		dialogShadow: "0 24px 60px rgba(0,0,0,0.25)",
 	},
 } as const satisfies Readonly<Record<string, unknown>> & {
 	color: Readonly<Record<ColorKey, string>>;
 	priority: Readonly<Record<Priority, string>>;
 	project: Readonly<Record<ProjectColor, string>>;
 	label: Readonly<Record<LabelColor, LabelColors>>;
+	overlay: Readonly<Record<OverlayKey, string>>;
 };
