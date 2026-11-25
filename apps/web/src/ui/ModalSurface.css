@@ -1,0 +1,34 @@
+/* Only while open: any other display would show a closed dialog. */
+.waw-modal[open] {
+	display: flex;
+}
+
+.waw-modal::backdrop {
+	background: var(--waw-scrim);
+}
+
+/* Focused by the component on open; it is not a control. */
+.waw-modal-title:focus {
+	outline: none;
+}
+
+/* Colours live here, not inline, so that the state rules can override them. */
+.waw-modal-close {
+	background-color: transparent;
+}
+
+@media (hover: hover) and (pointer: fine) {
+	.waw-modal-close:hover {
+		background-color: var(--waw-bg-hover);
+	}
+}
+
+/* After hover, so that pressed wins. */
+.waw-modal-close:active {
+	background-color: var(--waw-bg-active);
+}
+
+.waw-modal-close:focus-visible {
+	outline: var(--waw-focus-width) solid var(--waw-focus);
+	outline-offset: var(--waw-focus-offset);
+}
