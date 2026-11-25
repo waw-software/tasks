@@ -17,6 +17,7 @@ import { type ListOption, OptionList } from "./ui/OptionList";
 import { ProgressBar } from "./ui/ProgressBar";
 import { ProjectMarker } from "./ui/ProjectMarker";
 import { SegmentedChoice } from "./ui/SegmentedChoice";
+import { type TabId, TabBar } from "./ui/TabBar";
 import { TaskRow, type TaskRowProps } from "./ui/TaskRow";
 import { TextInput } from "./ui/TextInput";
 
@@ -133,13 +134,36 @@ const rows: readonly RowFixture[] = [
 	},
 ];
 
-export type GallerySection = "components" | "rows" | "controls" | "pickers";
+const destinations: Record<TabId, { title: string; lines: readonly string[] }> =
+	{
+		today: {
+			title: "Today",
+			lines: [
+				"Sun 22 Nov · 5 tasks left",
+				"2 of 7 done",
+				"Send the invoice to the client",
+				"Pay rent",
+				"Review the pull request",
+			],
+		},
+		upcoming: { title: "Upcoming", lines: [] },
+		search: { title: "Search", lines: [] },
+		browse: { title: "Browse", lines: ["Inbox", "home-server · synced"] },
+	};
+
+export type GallerySection =
+	| "components"
+	| "rows"
+	| "controls"
+	| "pickers"
+	| "navigation";
 
 const titles: Record<GallerySection, string> = {
 	components: "Component gallery",
 	rows: "Task row gallery",
 	controls: "Controls",
 	pickers: "Pickers",
+	navigation: "Navigation",
 };
 
 export default function Gallery({
@@ -148,20 +172,17 @@ export default function Gallery({
 	onOpenRows,
 	onOpenControls,
 	onOpenPickers,
+	onOpenNavigation,
 }: {
 	section?: GallerySection;
 	onBack: () => void;
 	onOpenRows?: () => void;
 	onOpenControls?: () => void;
 	onOpenPickers?: () => void;
+	onOpenNavigation?: () => void;
 }) {
-	return (
-		<ScrollView
-			contentInsetAdjustmentBehavior="automatic"
-			style={styles.screen}
-			contentContainerStyle={styles.content}
-			keyboardShouldPersistTaps="handled"
-		>
+	const header = (
+		<>
 			<Pressable
 				accessibilityRole="button"
 				accessibilityLabel="Back"
@@ -173,12 +194,28 @@ export default function Gallery({
 			<Text accessibilityRole="header" style={styles.title}>
 				{titles[section]}
 			</Text>
+		</>
+	);
+
+	if (section === "navigation") {
+		return <NavigationExample header={header} />;
+	}
+
+	return (
+		<ScrollView
+			contentInsetAdjustmentBehavior="automatic"
+			style={styles.screen}
+			contentContainerStyle={styles.content}
+			keyboardShouldPersistTaps="handled"
+		>
+			{header}
 
 			{section === "components" && (
 				<>
 					<GalleryLink label="Task rows" onPress={onOpenRows} />
 					<GalleryLink label="Controls" onPress={onOpenControls} />
 					<GalleryLink label="Pickers" onPress={onOpenPickers} />
+					<GalleryLink label="Navigation" onPress={onOpenNavigation} />
 					<ComponentExamples />
 				</>
 			)}
@@ -437,6 +474,39 @@ function PickerExamples() {
 	);
 }
 
+// The tab bar sits below the scroll view, not over it, so it hides no content.
+function NavigationExample({ header }: { header: ReactNode }) {
+	const [activeTab, setActiveTab] = useState<TabId>("today");
+	const [added, setAdded] = useState(false);
+	const { title, lines } = destinations[activeTab];
+
+	return (
+		<View style={styles.screen}>
+			<ScrollView
+				contentInsetAdjustmentBehavior="automatic"
+				style={styles.screen}
+				contentContainerStyle={styles.content}
+			>
+				{header}
+				<Text accessibilityRole="header" style={styles.destination}>
+					{title}
+				</Text>
+				{lines.map((line) => (
+					<Text key={line} style={styles.sample}>
+						{line}
+					</Text>
+				))}
+				{added && <Text style={styles.selection}>Selected: Add task</Text>}
+			</ScrollView>
+			<TabBar
+				activeTab={activeTab}
+				onTabChange={setActiveTab}
+				{...(activeTab === "today" && { onAdd: () => setAdded(true) })}
+			/>
+		</View>
+	);
+}
+
 function CheckboxExample({
 	label,
 	initiallyChecked = false,
@@ -539,6 +609,16 @@ const styles = StyleSheet.create({
 	title: {
 		fontSize: theme.type.screen,
 		fontFamily: fontFamilies.headingSemibold,
+		color: theme.color.ink,
+	},
+	destination: {
+		fontSize: theme.type.bodyMax,
+		fontFamily: fontFamilies.headingSemibold,
+		color: theme.color.ink,
+	},
+	sample: {
+		fontFamily: fontFamilies.bodyRegular,
+		fontSize: theme.type.bodyMin,
 		color: theme.color.ink,
 	},
 	section: {

@@ -357,4 +357,66 @@ describe("Gallery", () => {
 			).toMatchObject({ checked: true });
 		}
 	});
+
+	it("Navigation calls onOpenNavigation", async () => {
+		const onOpenNavigation = jest.fn();
+		await render(
+			<Gallery onBack={jest.fn()} onOpenNavigation={onOpenNavigation} />,
+		);
+
+		await fireEvent.press(screen.getByRole("button", { name: "Navigation" }));
+
+		expect(onOpenNavigation).toHaveBeenCalledTimes(1);
+	});
+
+	it("REQ-004: Navigation switches destinations and shows Add only on Today", async () => {
+		await render(<Gallery section="navigation" onBack={jest.fn()} />);
+		const press = (name: string) =>
+			fireEvent.press(screen.getByRole("button", { name }));
+		const todayLines = [
+			"Sun 22 Nov · 5 tasks left",
+			"2 of 7 done",
+			"Send the invoice to the client",
+			"Pay rent",
+			"Review the pull request",
+		];
+
+		expect(
+			screen.getByRole("header", { name: "Navigation" }),
+		).toBeOnTheScreen();
+		expect(screen.getByRole("header", { name: "Today" })).toBeOnTheScreen();
+		expect(
+			screen.getByRole("button", { name: "Today" }).props.accessibilityState,
+		).toMatchObject({ selected: true });
+		for (const line of todayLines) {
+			expect(screen.getByText(line)).toBeOnTheScreen();
+		}
+		expect(screen.queryByText("Selected: Add task")).toBeNull();
+
+		await press("Add task");
+
+		expect(screen.getByText("Selected: Add task")).toBeOnTheScreen();
+
+		await press("Browse");
+
+		expect(screen.getByRole("header", { name: "Browse" })).toBeOnTheScreen();
+		expect(screen.queryByRole("header", { name: "Today" })).toBeNull();
+		expect(screen.getByText("Inbox")).toBeOnTheScreen();
+		expect(screen.getByText("home-server · synced")).toBeOnTheScreen();
+		expect(screen.queryByText("Pay rent")).toBeNull();
+		expect(screen.queryByRole("button", { name: "Add task" })).toBeNull();
+
+		for (const name of ["Upcoming", "Search"]) {
+			await press(name);
+
+			expect(screen.getByRole("header", { name })).toBeOnTheScreen();
+			expect(screen.queryByText("Inbox")).toBeNull();
+			expect(screen.queryByRole("button", { name: "Add task" })).toBeNull();
+		}
+
+		await press("Today");
+
+		expect(screen.getByRole("header", { name: "Today" })).toBeOnTheScreen();
+		expect(screen.getByRole("button", { name: "Add task" })).toBeOnTheScreen();
+	});
 });
