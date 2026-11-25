@@ -10,10 +10,18 @@ import { type ListOption, OptionList } from "./ui/OptionList.tsx";
 import { ProgressBar } from "./ui/ProgressBar.tsx";
 import { ProjectMarker } from "./ui/ProjectMarker.tsx";
 import { SegmentedChoice } from "./ui/SegmentedChoice.tsx";
+import { Sidebar, type SidebarProps } from "./ui/Sidebar.tsx";
+import { TabBar, type TabId } from "./ui/TabBar.tsx";
 import { TaskRow, type TaskRowProps } from "./ui/TaskRow.tsx";
 import { TextInput } from "./ui/TextInput.tsx";
+import { useViewportBelow } from "./ui/useViewportBelow.ts";
 
-export type GallerySection = "components" | "rows" | "controls" | "pickers";
+export type GallerySection =
+	| "components"
+	| "rows"
+	| "controls"
+	| "pickers"
+	| "navigation";
 
 const projects: readonly { name: string; color: ProjectColor }[] = [
 	{ name: "Home", color: "red" },
@@ -129,6 +137,68 @@ const specificReminder: ListOption<string> = {
 	label: "At 10:00",
 };
 
+const navigationHref = "#/gallery/navigation";
+
+const sidebarViews: SidebarProps["views"] = [
+	{ id: "inbox", label: "Inbox", href: navigationHref, count: 3 },
+	{ id: "today", label: "Today", href: navigationHref, count: 5 },
+	{ id: "upcoming", label: "Upcoming", href: navigationHref },
+];
+
+const sidebarProjects: SidebarProps["projects"] = [
+	{ id: "home", label: "Home", href: navigationHref, count: 5, color: "red" },
+	{ id: "work", label: "Work", href: navigationHref, count: 9, color: "blue" },
+	{
+		id: "personal",
+		label: "Personal",
+		href: navigationHref,
+		count: 4,
+		color: "green",
+	},
+];
+
+const sidebarLabels: SidebarProps["labels"] = labels.map(({ name, color }) => ({
+	id: name,
+	label: name,
+	href: navigationHref,
+	color,
+}));
+
+const sidebarFilters: SidebarProps["filters"] = [
+	{ id: "priority-1", label: "Priority 1", href: navigationHref, count: 3 },
+	{
+		id: "week-at-work",
+		label: "This week at work",
+		href: navigationHref,
+		count: 5,
+	},
+];
+
+const sidebarDestinations = [
+	...sidebarViews,
+	...sidebarProjects,
+	...sidebarLabels,
+	...sidebarFilters,
+];
+
+const tabHeadings: Record<TabId, string> = {
+	today: "Today",
+	upcoming: "Upcoming",
+	search: "Search",
+	browse: "Browse",
+};
+
+const tabSamples: Partial<Record<TabId, readonly string[]>> = {
+	today: [
+		"Sun 22 Nov · 5 tasks left",
+		"2 of 7 done",
+		"Send the invoice to the client",
+		"Pay rent",
+		"Review the pull request",
+	],
+	browse: ["Inbox", "home-server · synced"],
+};
+
 const bodyFont = `${theme.font.body}, system-ui, sans-serif`;
 const headingFont = `"${theme.font.heading}", system-ui, sans-serif`;
 
@@ -215,6 +285,122 @@ function Title({ children }: { children: React.ReactNode }) {
 		>
 			{children}
 		</h1>
+	);
+}
+
+function NavigationContent({
+	destination,
+	addPressed,
+	lines = [],
+	style,
+}: {
+	destination: string;
+	addPressed: boolean;
+	lines?: readonly string[];
+	style?: React.CSSProperties;
+}) {
+	return (
+		<main
+			style={{
+				boxSizing: "border-box",
+				display: "flex",
+				flexDirection: "column",
+				gap: 8,
+				padding: 20,
+				background: theme.color.bg,
+				color: theme.color.ink,
+				fontFamily: bodyFont,
+				fontSize: theme.type.bodyMin,
+				...style,
+			}}
+		>
+			<div style={{ display: "flex", flexDirection: "column" }}>
+				<GalleryLink href="#/gallery">Back</GalleryLink>
+				<Title>Navigation</Title>
+			</div>
+			<h2 style={{ margin: 0, fontFamily: headingFont }}>{destination}</h2>
+			{lines.map((line) => (
+				<p key={line} style={{ margin: 0 }}>
+					{line}
+				</p>
+			))}
+			{addPressed ? <p style={{ margin: 0 }}>Selected: Add task</p> : null}
+		</main>
+	);
+}
+
+// The page takes the full width: the sidebar and the tab bar belong to its edges.
+function NavigationPage() {
+	const narrow = useViewportBelow(theme.size.sidebarFrom);
+	const [tab, setTab] = useState<TabId>("today");
+	const [activeId, setActiveId] = useState("today");
+	const [addPressed, setAddPressed] = useState(false);
+	const add = () => setAddPressed(true);
+
+	if (narrow) {
+		const safeBottom = `max(env(safe-area-inset-bottom, 0px), ${theme.space.navigationBottom}px)`;
+		// The height of the dock with the add button, so that it hides no content.
+		const dockHeight =
+			theme.size.fab +
+			theme.space.fabAboveTab +
+			theme.size.controlBorder +
+			theme.space.tabTop +
+			theme.size.tab;
+		return (
+			<>
+				<NavigationContent
+					destination={tabHeadings[tab]}
+					addPressed={addPressed}
+					lines={tabSamples[tab] ?? []}
+					style={{ paddingBottom: `calc(${dockHeight}px + ${safeBottom})` }}
+				/>
+				<div
+					style={{
+						position: "fixed",
+						right: 0,
+						bottom: 0,
+						left: 0,
+						// The room beside the add button must not block the content.
+						pointerEvents: "none",
+					}}
+				>
+					<TabBar
+						activeTab={tab}
+						onTabChange={setTab}
+						{...(tab === "today" ? { onAdd: add } : {})}
+					/>
+					<div
+						style={{
+							height: safeBottom,
+							background: theme.color.bg,
+							pointerEvents: "auto",
+						}}
+					/>
+				</div>
+			</>
+		);
+	}
+
+	return (
+		<div style={{ display: "flex", height: "100vh" }}>
+			<Sidebar
+				views={sidebarViews}
+				projects={sidebarProjects}
+				labels={sidebarLabels}
+				filters={sidebarFilters}
+				activeId={activeId}
+				serverStatus={{ label: "home-server · synced", tone: "synced" }}
+				onAdd={add}
+				onNavigate={setActiveId}
+			/>
+			<NavigationContent
+				destination={
+					sidebarDestinations.find(({ id }) => id === activeId)?.label ?? ""
+				}
+				addPressed={addPressed}
+				style={{ flex: 1, minWidth: 0, overflowY: "auto" }}
+			/>
+		</div>
 	);
 }
 
@@ -467,6 +653,7 @@ function ComponentsPage() {
 				<GalleryLink href="#/gallery/rows">Task rows</GalleryLink>
 				<GalleryLink href="#/gallery/controls">Controls</GalleryLink>
 				<GalleryLink href="#/gallery/pickers">Pickers</GalleryLink>
+				<GalleryLink href={navigationHref}>Navigation</GalleryLink>
 			</div>
 			<Section title="Project markers">
 				<div style={{ ...row, columnGap: 20 }}>
@@ -538,5 +725,6 @@ export default function Gallery({
 	if (section === "rows") return <RowsPage />;
 	if (section === "controls") return <ControlsPage />;
 	if (section === "pickers") return <PickersPage />;
+	if (section === "navigation") return <NavigationPage />;
 	return <ComponentsPage />;
 }
