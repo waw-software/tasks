@@ -11,7 +11,7 @@ type ButtonBase = {
 
 export type ButtonProps =
 	| (ButtonBase & { variant: "primary" | "secondary"; disabled?: boolean })
-	| (ButtonBase & { variant: "text" });
+	| (ButtonBase & { variant: "text"; disabled?: never });
 
 export function Button(props: ButtonProps) {
 	const { label, variant, onPress, size = "regular", fullWidth } = props;

@@ -47,6 +47,20 @@ test("activates a named button without submitting a form and ignores a disabled 
 	expect(screen.getByText("Selected: Connect")).toBeDefined();
 });
 
+test("does not type a disabled text button, also through a variable", () => {
+	// A direct literal is already refused as an excess property; a variable is not.
+	const props = {
+		variant: "text" as const,
+		label: "x",
+		onPress: () => {},
+		disabled: true,
+	};
+	// @ts-expect-error text buttons cannot be disabled
+	const bad: ButtonProps = props;
+
+	expect(bad.variant).toBe("text");
+});
+
 test("sets the documented geometry and colour variables", () => {
 	const onPress = () => {};
 	const cases: {
@@ -126,6 +140,9 @@ test("sets the documented geometry and colour variables", () => {
 			minWidth: style.minWidth,
 			radius: style.borderRadius,
 			width: style.width,
+			lines: ["--waw-border", "--waw-focus-width", "--waw-focus-offset"].map(
+				(name) => style.getPropertyValue(name),
+			),
 			colors: ["--waw-bg", "--waw-ink", "--waw-edge"].map((name) =>
 				style.getPropertyValue(name),
 			),
@@ -135,6 +152,7 @@ test("sets the documented geometry and colour variables", () => {
 			minWidth: "44px",
 			radius,
 			width,
+			lines: ["1px", "2px", "2px"],
 			colors,
 		});
 	}

@@ -76,6 +76,8 @@ export function TextInput({
 				style={
 					{
 						"--waw-focus": theme.color["accent-text"],
+						"--waw-focus-width": `${theme.size.focusRing}px`,
+						"--waw-focus-offset": `${theme.space.focusOffset}px`,
 						boxSizing: "border-box",
 						width: "100%",
 						minHeight: theme.size.desktopInput,

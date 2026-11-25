@@ -10,7 +10,7 @@ type ButtonBase = {
 
 export type ButtonProps =
 	| (ButtonBase & { variant: "primary" | "secondary"; disabled?: boolean })
-	| (ButtonBase & { variant: "text" });
+	| (ButtonBase & { variant: "text"; disabled?: never });
 
 type StateColors = {
 	bg: string;
@@ -99,6 +99,9 @@ export function Button(props: ButtonProps): React.JSX.Element {
 					"--waw-bg-active": colors.activeBg,
 					"--waw-ink-active": colors.activeInk,
 					"--waw-focus": theme.color["accent-text"],
+					"--waw-border": `${theme.size.controlBorder}px`,
+					"--waw-focus-width": `${theme.size.focusRing}px`,
+					"--waw-focus-offset": `${theme.space.focusOffset}px`,
 					boxSizing: "border-box",
 					minWidth: theme.size.touchTarget,
 					maxWidth: "100%",
