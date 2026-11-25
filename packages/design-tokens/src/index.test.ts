@@ -95,6 +95,7 @@ test("DESIGN §2 type roles, fonts and weights", () => {
 		chip: 13,
 		taskTitleLineHeight: 22,
 		controlSupport: 14,
+		sidebarWordmark: 17,
 	});
 });
 
@@ -111,6 +112,7 @@ test("DESIGN §2–3 radii, spacing and sizes", () => {
 		pill: 999,
 		projectMarker: 3,
 		checkbox: 3,
+		sidebarWordmarkMark: 9,
 	});
 	expect(theme.space).toEqual({
 		mainBlock: 32,
@@ -138,6 +140,18 @@ test("DESIGN §2–3 radii, spacing and sizes", () => {
 		optionInline: 14,
 		swatchLabelGap: 10,
 		segmentIconGap: 4,
+		tabTop: 6,
+		tabInline: 12,
+		tabIconGap: 3,
+		navigationBottom: 20,
+		fabInline: 20,
+		fabAboveTab: 18,
+		sidebarBlock: 20,
+		sidebarInline: 14,
+		sidebarGroupGap: 18,
+		sidebarRowGap: 2,
+		sidebarRowInline: 10,
+		sidebarChipGap: 6,
 	});
 	expect(theme.size).toEqual({
 		touchTarget: 44,
@@ -163,5 +177,11 @@ test("DESIGN §2–3 radii, spacing and sizes", () => {
 		optionRow: 50,
 		radioDot: 12,
 		pickerMark: 16,
+		sidebarFrom: 700,
+		navIcon: 20,
+		fabIcon: 24,
+		sidebarWordmarkMark: 30,
+		sidebarWordmarkIcon: 16,
+		serverStatusDot: 8,
 	});
 });

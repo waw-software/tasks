@@ -117,6 +117,7 @@ export const theme = {
 		chip: 13,
 		taskTitleLineHeight: 22,
 		controlSupport: 14,
+		sidebarWordmark: 17,
 	},
 	radius: {
 		chip: 6,
@@ -130,6 +131,7 @@ export const theme = {
 		pill: 999,
 		projectMarker: 3,
 		checkbox: 3,
+		sidebarWordmarkMark: 9,
 	},
 	space: {
 		mainBlock: 32,
@@ -157,6 +159,18 @@ export const theme = {
 		optionInline: 14,
 		swatchLabelGap: 10,
 		segmentIconGap: 4,
+		tabTop: 6,
+		tabInline: 12,
+		tabIconGap: 3,
+		navigationBottom: 20,
+		fabInline: 20,
+		fabAboveTab: 18,
+		sidebarBlock: 20,
+		sidebarInline: 14,
+		sidebarGroupGap: 18,
+		sidebarRowGap: 2,
+		sidebarRowInline: 10,
+		sidebarChipGap: 6,
 	},
 	size: {
 		touchTarget: 44,
@@ -182,6 +196,12 @@ export const theme = {
 		optionRow: 50,
 		radioDot: 12,
 		pickerMark: 16,
+		sidebarFrom: 700,
+		navIcon: 20,
+		fabIcon: 24,
+		sidebarWordmarkMark: 30,
+		sidebarWordmarkIcon: 16,
+		serverStatusDot: 8,
 	},
 } as const satisfies Readonly<Record<string, unknown>> & {
 	color: Readonly<Record<ColorKey, string>>;
