@@ -7,7 +7,7 @@ export type Screen =
 			viewport: { width: number; height: number };
 			readyHeading: string;
 	  })
-	| (Base & { surface: "electron"; readyHeading: string })
+	| (Base & { surface: "electron"; readyHeading: string; hash?: string })
 	| (Base & { surface: "ios" });
 
 // A later milestone adds a screen here: id `<screen>.<surface>`, the route (web) or launch
@@ -36,4 +36,28 @@ export const screens: readonly Screen[] = [
 		mockup: null,
 	},
 	{ id: "shell.ios", surface: "ios", mockup: null },
+	{
+		id: "gallery.web-390",
+		surface: "web",
+		route: "/#/gallery",
+		viewport: { width: 390, height: 844 },
+		readyHeading: "Component gallery",
+		mockup: null,
+	},
+	{
+		id: "gallery.web-1440",
+		surface: "web",
+		route: "/#/gallery",
+		viewport: { width: 1440, height: 900 },
+		readyHeading: "Component gallery",
+		mockup: null,
+	},
+	{
+		id: "gallery.electron",
+		surface: "electron",
+		hash: "#/gallery",
+		readyHeading: "Component gallery",
+		mockup: null,
+	},
+	{ id: "gallery.ios", surface: "ios", mockup: null },
 ];

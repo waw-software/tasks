@@ -4,7 +4,11 @@ import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { _electron } from "playwright";
 
-export type ElectronCapture = { id: string; readyHeading: string };
+export type ElectronCapture = {
+	id: string;
+	readyHeading: string;
+	hash?: string;
+};
 
 const URL_TIMEOUT_MS = 15_000;
 const HEADING_TIMEOUT_MS = 15_000;
@@ -75,6 +79,11 @@ export async function captureElectron(
 			throw new Error(
 				`desktop window loaded ${win.url()}, expected ${expected}`,
 			);
+		}
+		if (item.hash !== undefined) {
+			await win.evaluate((h) => {
+				window.location.hash = h;
+			}, item.hash);
 		}
 		await win
 			.getByRole("heading", { level: 1, name: item.readyHeading, exact: true })

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseArgs, type FsChecks } from "./args.ts";
+import { needsGalleryBuild, parseArgs, type FsChecks } from "./args.ts";
 import { screens as realScreens, type Screen } from "./screens.ts";
 
 const root = "/repo";
@@ -115,23 +115,90 @@ describe("parseArgs", () => {
 		);
 		expect(run(["--out", "out/x"]).iosDevice).toBeUndefined();
 	});
+
+	it("C4 flags a selection of more than one iOS screen", () => {
+		const twoIos: readonly Screen[] = [
+			{ id: "a.ios", surface: "ios", mockup: null },
+			{ id: "b.ios", surface: "ios", mockup: null },
+			{
+				id: "c.electron",
+				surface: "electron",
+				readyHeading: "H",
+				mockup: null,
+			},
+			{
+				id: "d.web",
+				surface: "web",
+				route: "/",
+				viewport: { width: 1, height: 2 },
+				readyHeading: "H",
+				mockup: null,
+			},
+		];
+		const conflict = (ids: string[]) =>
+			parseArgs(
+				["--out", "out/x", ...ids.flatMap((id) => ["--screen", id])],
+				twoIos,
+				fakeFs().fs,
+				root,
+			).iosConflict;
+		expect(conflict(["a.ios", "b.ios"])).toBe(true);
+		expect(conflict(["a.ios", "d.web"])).toBe(false);
+		expect(conflict([])).toBe(true);
+	});
+
+	it("C4 builds the web app with the gallery only when a gallery screen is selected", () => {
+		const needs = (...ids: string[]) =>
+			needsGalleryBuild(
+				parseArgs(
+					["--out", "out/x", ...ids.flatMap((id) => ["--screen", id])],
+					realScreens,
+					fakeFs().fs,
+					root,
+				).screens,
+			);
+		expect(needs("shell.web-390")).toBe(false);
+		expect(needs("shell.electron")).toBe(false);
+		expect(needs("gallery.web-390")).toBe(true);
+		expect(needs("gallery.electron")).toBe(true);
+		expect(needs("shell.web-390", "gallery.ios")).toBe(false);
+	});
 });
 
 describe("manifest", () => {
-	it("C3 manifest has the four shell screens with unique ids and the agreed viewports", () => {
+	it("C3 manifest has the shell and gallery screens with unique ids and the agreed viewports", () => {
 		expect(realScreens.map((s) => s.id)).toEqual([
 			"shell.web-390",
 			"shell.web-1440",
 			"shell.electron",
 			"shell.ios",
+			"gallery.web-390",
+			"gallery.web-1440",
+			"gallery.electron",
+			"gallery.ios",
 		]);
-		expect(new Set(realScreens.map((s) => s.id)).size).toBe(4);
+		expect(new Set(realScreens.map((s) => s.id)).size).toBe(8);
 		const viewports = realScreens.flatMap((s) =>
 			s.surface === "web" ? [s.viewport] : [],
 		);
 		expect(viewports).toEqual([
 			{ width: 390, height: 844 },
 			{ width: 1440, height: 900 },
+			{ width: 390, height: 844 },
+			{ width: 1440, height: 900 },
+		]);
+		const pages = realScreens.flatMap((s) => {
+			if (s.surface === "web") return [[s.id, s.route, s.readyHeading]];
+			if (s.surface === "electron") return [[s.id, s.hash, s.readyHeading]];
+			return [];
+		});
+		expect(pages).toEqual([
+			["shell.web-390", "/", "WAW Tasks"],
+			["shell.web-1440", "/", "WAW Tasks"],
+			["shell.electron", undefined, "WAW Tasks"],
+			["gallery.web-390", "/#/gallery", "Component gallery"],
+			["gallery.web-1440", "/#/gallery", "Component gallery"],
+			["gallery.electron", "#/gallery", "Component gallery"],
 		]);
 		expect(realScreens.every((s) => s.mockup === null)).toBe(true);
 	});

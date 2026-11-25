@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync } from "node:fs";
 import { join, relative } from "node:path";
-import { parseArgs, type FsChecks } from "./args.ts";
+import { needsGalleryBuild, parseArgs, type FsChecks } from "./args.ts";
 import { captureElectron } from "./capture-electron.ts";
 import { captureIos } from "./capture-ios.ts";
 import { captureWeb, type WebCapture } from "./capture-web.ts";
@@ -12,12 +12,17 @@ function fail(message: string): never {
 	process.exit(1);
 }
 
-function build(repoRoot: string, pkg: string): void {
+function build(
+	repoRoot: string,
+	pkg: string,
+	env: Record<string, string> = {},
+): void {
 	const result = spawnSync(
 		join(repoRoot, "scripts/project/pnpm.sh"),
 		["--filter", pkg, "build"],
 		{
 			cwd: repoRoot,
+			env: { ...process.env, ...env },
 			stdio: ["ignore", process.stderr, process.stderr],
 		},
 	);
@@ -44,7 +49,12 @@ try {
 
 	const web = request.screens.filter((s) => s.surface === "web");
 	const electron = request.screens.filter((s) => s.surface === "electron");
-	if (web.length > 0 || electron.length > 0) build(repoRoot, "@waw/web");
+	if (web.length > 0 || electron.length > 0) {
+		// Always explicit: the process env wins over a Vite env file.
+		build(repoRoot, "@waw/web", {
+			VITE_WAW_GALLERY: needsGalleryBuild(request.screens) ? "1" : "0",
+		});
+	}
 	if (electron.length > 0) build(repoRoot, "@waw/desktop");
 
 	const actual = new Map<string, string>();
@@ -68,14 +78,18 @@ try {
 		actual.set(
 			s.id,
 			await captureElectron(
-				{ id: s.id, readyHeading: s.readyHeading },
+				{
+					id: s.id,
+					readyHeading: s.readyHeading,
+					...(s.hash === undefined ? {} : { hash: s.hash }),
+				},
 				outDir,
 				repoRoot,
 			),
 		);
 	}
 	for (const s of request.screens) {
-		if (s.surface !== "ios") continue;
+		if (s.surface !== "ios" || request.iosConflict) continue;
 		const destination = join(outDir, `${s.id}.actual.png`);
 		if (captureIos(request.iosDevice, destination) === "captured")
 			actual.set(s.id, destination);
@@ -84,6 +98,12 @@ try {
 
 	const rel = (p: string) => relative(repoRoot, p);
 	for (const s of request.screens) {
+		if (s.surface === "ios" && request.iosConflict) {
+			process.stdout.write(
+				`SKIP ${s.id}: more than one iOS screen selected; capture one iOS screen per run\n`,
+			);
+			continue;
+		}
 		if (unavailable.has(s.id)) {
 			process.stdout.write(`SKIP ${s.id}: simctl unavailable\n`);
 			continue;
