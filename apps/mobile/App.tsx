@@ -3,14 +3,26 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import { fontFamilies, useAppFonts } from "./src/fonts";
-import Gallery from "./src/Gallery";
+import Gallery, { type GallerySection } from "./src/Gallery";
 
-export function isGalleryUrl(url: string | null): boolean {
-	return url?.endsWith("/--/gallery") === true;
+export function galleryRoute(url: string | null): GallerySection | null {
+	if (url === null) {
+		return null;
+	}
+	let path: string;
+	try {
+		path = new URL(url).pathname;
+	} catch {
+		return null;
+	}
+	if (path.endsWith("/--/gallery")) {
+		return "components";
+	}
+	return path.endsWith("/--/gallery/rows") ? "rows" : null;
 }
 
 export default function App() {
-	const [screen, setScreen] = useState<"shell" | "gallery">("shell");
+	const [screen, setScreen] = useState<"shell" | "gallery" | "rows">("shell");
 	const [fontsLoaded, fontError] = useAppFonts();
 
 	useEffect(() => {
@@ -24,8 +36,9 @@ export default function App() {
 			return;
 		}
 		const open = (url: string | null) => {
-			if (isGalleryUrl(url)) {
-				setScreen("gallery");
+			const section = galleryRoute(url);
+			if (section) {
+				setScreen(section === "rows" ? "rows" : "gallery");
 			}
 		};
 		Linking.getInitialURL().then((url) => open(url ?? null));
@@ -39,10 +52,16 @@ export default function App() {
 		return null;
 	}
 
-	if (screen === "gallery") {
+	if (screen !== "shell") {
+		const section = screen === "rows" ? "rows" : "components";
 		return (
 			<>
-				<Gallery onBack={() => setScreen("shell")} />
+				<Gallery
+					key={section}
+					section={section}
+					onBack={() => setScreen(screen === "rows" ? "gallery" : "shell")}
+					onOpenRows={() => setScreen("rows")}
+				/>
 				<StatusBar style="auto" />
 			</>
 		);
