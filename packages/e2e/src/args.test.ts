@@ -171,6 +171,9 @@ describe("parseArgs", () => {
 		expect(needs("gallery-pickers.web-390")).toBe(true);
 		expect(needs("gallery-pickers.electron")).toBe(true);
 		expect(needs("gallery-pickers.ios")).toBe(false);
+		expect(needs("gallery-navigation.web-390")).toBe(true);
+		expect(needs("gallery-navigation.electron")).toBe(true);
+		expect(needs("gallery-navigation.ios")).toBe(false);
 		expect(
 			needsGalleryBuild([
 				{
@@ -209,12 +212,18 @@ describe("manifest", () => {
 			"gallery-pickers.web-1440",
 			"gallery-pickers.electron",
 			"gallery-pickers.ios",
+			"gallery-navigation.web-390",
+			"gallery-navigation.web-1440",
+			"gallery-navigation.electron",
+			"gallery-navigation.ios",
 		]);
-		expect(new Set(realScreens.map((s) => s.id)).size).toBe(20);
+		expect(new Set(realScreens.map((s) => s.id)).size).toBe(24);
 		const viewports = realScreens.flatMap((s) =>
 			s.surface === "web" ? [s.viewport] : [],
 		);
 		expect(viewports).toEqual([
+			{ width: 390, height: 844 },
+			{ width: 1440, height: 900 },
 			{ width: 390, height: 844 },
 			{ width: 1440, height: 900 },
 			{ width: 390, height: 844 },
@@ -247,6 +256,9 @@ describe("manifest", () => {
 			["gallery-pickers.web-390", "/#/gallery/pickers", "Pickers"],
 			["gallery-pickers.web-1440", "/#/gallery/pickers", "Pickers"],
 			["gallery-pickers.electron", "#/gallery/pickers", "Pickers"],
+			["gallery-navigation.web-390", "/#/gallery/navigation", "Navigation"],
+			["gallery-navigation.web-1440", "/#/gallery/navigation", "Navigation"],
+			["gallery-navigation.electron", "#/gallery/navigation", "Navigation"],
 		]);
 		expect(realScreens.every((s) => s.mockup === null)).toBe(true);
 	});
