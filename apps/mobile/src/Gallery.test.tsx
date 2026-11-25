@@ -1,5 +1,10 @@
 import { theme } from "@waw/design-tokens";
-import { fireEvent, render, screen } from "@testing-library/react-native";
+import {
+	fireEvent,
+	render,
+	screen,
+	within,
+} from "@testing-library/react-native";
 import { StyleSheet } from "react-native";
 import Gallery from "./Gallery";
 
@@ -150,5 +155,103 @@ describe("Gallery", () => {
 		await fireEvent.press(payRent());
 
 		expect(payRent()).toBeChecked();
+	});
+
+	it("Controls calls onOpenControls", async () => {
+		const onOpenControls = jest.fn();
+		await render(
+			<Gallery onBack={jest.fn()} onOpenControls={onOpenControls} />,
+		);
+
+		await fireEvent.press(screen.getByRole("button", { name: "Controls" }));
+
+		expect(onOpenControls).toHaveBeenCalledTimes(1);
+	});
+
+	it("AC-30 Controls shows the waiting count and Retry", async () => {
+		await render(<Gallery section="controls" onBack={jest.fn()} />);
+
+		const banner = within(screen.getByTestId("banner-warning"));
+		expect(
+			banner.getByLabelText(
+				/Working offline.*3 changes are saved on this phone and will sync when the server is reachable\./,
+			),
+		).toBeOnTheScreen();
+		expect(screen.getByText("Selected: none")).toBeOnTheScreen();
+
+		await fireEvent.press(banner.getByRole("button", { name: "Retry" }));
+
+		expect(screen.getByText("Selected: Retry")).toBeOnTheScreen();
+	});
+
+	it("AC-35 Controls shows the update presentation", async () => {
+		await render(<Gallery section="controls" onBack={jest.fn()} />);
+
+		const banner = within(screen.getByTestId("banner-update"));
+		expect(banner.getByText("Your server needs an update")).toBeOnTheScreen();
+		expect(
+			banner.getByText(
+				"It runs API v1, this app supports v2. Newer features stay off until you update.",
+			),
+		).toBeOnTheScreen();
+
+		await fireEvent.press(
+			banner.getByRole("button", { name: "How to update" }),
+		);
+
+		expect(screen.getByText("Selected: How to update")).toBeOnTheScreen();
+	});
+
+	it("AC-28 Controls shows the Connect fields and reachable result", async () => {
+		await render(<Gallery section="controls" onBack={jest.fn()} />);
+
+		const address = screen.getByTestId("input-Server address");
+		expect(address.props.value).toBe("https://tasks.example.com");
+		expect(address.props.accessibilityHint).toBe(
+			"Enter its address to continue.",
+		);
+		const token = () => screen.getByTestId("input-Access token");
+		expect(token().props.value).toBe("example-only");
+		expect(token().props.secureTextEntry).toBe(true);
+		expect(token().props.accessibilityHint).toBe("Enter a valid access token.");
+		expect(screen.getByText("Enter a valid access token.")).toBeOnTheScreen();
+
+		await fireEvent.changeText(token(), "example-only-2");
+
+		expect(token().props.value).toBe("example-only-2");
+		expect(screen.queryByText("Enter a valid access token.")).toBeNull();
+
+		await fireEvent.changeText(address, "https://other.example.com");
+
+		expect(screen.getByTestId("input-Server address").props.value).toBe(
+			"https://other.example.com",
+		);
+
+		const success = within(screen.getByTestId("banner-success"));
+		expect(success.getByText("Server reachable · API v1")).toBeOnTheScreen();
+		expect(success.queryByRole("button")).toBeNull();
+	});
+
+	it("Controls buttons report the selection and disabled Check again keeps it", async () => {
+		await render(<Gallery section="controls" onBack={jest.fn()} />);
+
+		expect(screen.getByRole("header", { name: "Controls" })).toBeOnTheScreen();
+		for (const name of [
+			"Connect",
+			"Continue with limited features",
+			"How to deploy with Docker",
+		]) {
+			await fireEvent.press(screen.getByRole("button", { name }));
+
+			expect(screen.getByText(`Selected: ${name}`)).toBeOnTheScreen();
+		}
+		const again = screen.getByRole("button", { name: "Check again" });
+		expect(again.props.accessibilityState).toMatchObject({ disabled: true });
+
+		await fireEvent.press(again);
+
+		expect(
+			screen.getByText("Selected: How to deploy with Docker"),
+		).toBeOnTheScreen();
 	});
 });

@@ -2,12 +2,15 @@ import { type LabelColor, type ProjectColor, theme } from "@waw/design-tokens";
 import { type ReactNode, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { fontFamilies } from "./fonts";
+import { Banner } from "./ui/Banner";
+import { Button } from "./ui/Button";
 import { Checkbox } from "./ui/Checkbox";
 import { GroupHeader } from "./ui/GroupHeader";
 import { LabelChip, type LabelChipProps } from "./ui/LabelChip";
 import { ProgressBar } from "./ui/ProgressBar";
 import { ProjectMarker } from "./ui/ProjectMarker";
 import { TaskRow, type TaskRowProps } from "./ui/TaskRow";
+import { TextInput } from "./ui/TextInput";
 
 const projects: readonly { color: ProjectColor; name: string }[] = [
 	{ color: "red", name: "Home" },
@@ -79,22 +82,31 @@ const rows: readonly RowFixture[] = [
 	},
 ];
 
-export type GallerySection = "components" | "rows";
+export type GallerySection = "components" | "rows" | "controls";
+
+const titles: Record<GallerySection, string> = {
+	components: "Component gallery",
+	rows: "Task row gallery",
+	controls: "Controls",
+};
 
 export default function Gallery({
 	section = "components",
 	onBack,
 	onOpenRows,
+	onOpenControls,
 }: {
 	section?: GallerySection;
 	onBack: () => void;
 	onOpenRows?: () => void;
+	onOpenControls?: () => void;
 }) {
 	return (
 		<ScrollView
 			contentInsetAdjustmentBehavior="automatic"
 			style={styles.screen}
 			contentContainerStyle={styles.content}
+			keyboardShouldPersistTaps="handled"
 		>
 			<Pressable
 				accessibilityRole="button"
@@ -105,24 +117,33 @@ export default function Gallery({
 				<Text style={styles.backText}>Back</Text>
 			</Pressable>
 			<Text accessibilityRole="header" style={styles.title}>
-				{section === "rows" ? "Task row gallery" : "Component gallery"}
+				{titles[section]}
 			</Text>
 
-			{section === "rows" ? (
-				<RowExamples />
-			) : (
+			{section === "components" && (
 				<>
-					<Pressable
-						accessibilityRole="button"
-						onPress={onOpenRows}
-						style={styles.link}
-					>
-						<Text style={styles.linkText}>Task rows</Text>
-					</Pressable>
+					<GalleryLink label="Task rows" onPress={onOpenRows} />
+					<GalleryLink label="Controls" onPress={onOpenControls} />
 					<ComponentExamples />
 				</>
 			)}
+			{section === "rows" && <RowExamples />}
+			{section === "controls" && <ControlExamples />}
 		</ScrollView>
+	);
+}
+
+function GalleryLink({
+	label,
+	onPress,
+}: {
+	label: string;
+	onPress: (() => void) | undefined;
+}) {
+	return (
+		<Pressable accessibilityRole="button" onPress={onPress} style={styles.link}>
+			<Text style={styles.linkText}>{label}</Text>
+		</Pressable>
 	);
 }
 
@@ -178,6 +199,77 @@ function RowExamples() {
 					))}
 				</View>
 			</Section>
+		</>
+	);
+}
+
+function ControlExamples() {
+	const [address, setAddress] = useState("https://tasks.example.com");
+	const [token, setToken] = useState("example-only");
+	const [tokenEdited, setTokenEdited] = useState(false);
+	const [selected, setSelected] = useState("none");
+	const action = (label: string) => ({
+		label,
+		onPress: () => setSelected(label),
+	});
+
+	return (
+		<>
+			<Section caption="Text inputs">
+				<TextInput
+					label="Server address"
+					kind="url"
+					value={address}
+					onValueChange={setAddress}
+					helperText="Enter its address to continue."
+				/>
+				<TextInput
+					label="Access token"
+					kind="token"
+					value={token}
+					onValueChange={(value) => {
+						setToken(value);
+						setTokenEdited(true);
+					}}
+					{...(!tokenEdited && { errorText: "Enter a valid access token." })}
+				/>
+			</Section>
+
+			<Section caption="Banners">
+				<Banner
+					tone="warning"
+					title="Working offline"
+					message="3 changes are saved on this phone and will sync when the server is reachable."
+					action={action("Retry")}
+				/>
+				<Banner
+					tone="update"
+					title="Your server needs an update"
+					message="It runs API v1, this app supports v2. Newer features stay off until you update."
+					action={action("How to update")}
+				/>
+				<Banner tone="success" title="Server reachable · API v1" />
+			</Section>
+
+			<Section caption="Buttons">
+				<Button variant="primary" fullWidth {...action("Connect")} />
+				<Button
+					variant="secondary"
+					fullWidth
+					{...action("Continue with limited features")}
+				/>
+				<View style={styles.inlineButtons}>
+					<Button variant="text" {...action("How to deploy with Docker")} />
+					<Button
+						variant="primary"
+						size="compact"
+						disabled
+						{...action("Check again")}
+					/>
+				</View>
+			</Section>
+
+			<Text style={styles.selection}>Selected: {selected}</Text>
 		</>
 	);
 }
@@ -259,6 +351,17 @@ const styles = StyleSheet.create({
 		flexDirection: "row",
 		alignItems: "center",
 		gap: theme.space.chipInline,
+	},
+	inlineButtons: {
+		flexDirection: "row",
+		flexWrap: "wrap",
+		alignItems: "center",
+		gap: theme.space.chipInline,
+	},
+	selection: {
+		fontFamily: fontFamilies.bodyRegular,
+		fontSize: theme.type.bodyMin,
+		color: theme.color.ink,
 	},
 	exampleLabel: {
 		fontFamily: fontFamilies.bodyRegular,

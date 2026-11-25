@@ -11,6 +11,7 @@ jest.mock("./src/fonts", () => ({
 
 const galleryUrl = "exp://127.0.0.1:8081/--/gallery";
 const rowsUrl = "exp://127.0.0.1:8081/--/gallery/rows";
+const controlsUrl = "exp://127.0.0.1:8081/--/gallery/controls";
 
 describe("App", () => {
 	beforeEach(() => {
@@ -163,6 +164,68 @@ describe("App", () => {
 		expect(
 			screen.getByRole("header", { name: "Task row gallery" }),
 		).toBeOnTheScreen();
+	});
+
+	it("REQ-001 AC-04: Controls opens from the gallery or a dev link and Back returns", async () => {
+		const shell = await render(<App />);
+		await fireEvent.press(
+			screen.getByRole("button", { name: "Component gallery" }),
+		);
+
+		await fireEvent.press(screen.getByRole("button", { name: "Controls" }));
+
+		expect(screen.getByRole("header", { name: "Controls" })).toBeOnTheScreen();
+
+		await fireEvent.press(screen.getByRole("button", { name: "Back" }));
+
+		expect(
+			screen.getByRole("header", { name: "Component gallery" }),
+		).toBeOnTheScreen();
+
+		await shell.unmount();
+		jest.spyOn(Linking, "getInitialURL").mockResolvedValue(controlsUrl);
+		const dev = await render(<App />);
+
+		expect(
+			await screen.findByRole("header", { name: "Controls" }),
+		).toBeOnTheScreen();
+
+		await dev.unmount();
+		const globals = globalThis as unknown as { __DEV__: boolean };
+		const wasDev = globals.__DEV__;
+		globals.__DEV__ = false;
+		try {
+			const release = await render(<App />);
+
+			expect(
+				screen.getByRole("header", { name: "WAW Tasks" }),
+			).toBeOnTheScreen();
+			expect(screen.queryByRole("header", { name: "Controls" })).toBeNull();
+			await release.unmount();
+		} finally {
+			globals.__DEV__ = wasDev;
+		}
+
+		jest.spyOn(Linking, "getInitialURL").mockResolvedValue(null);
+		const listen = jest.spyOn(Linking, "addEventListener");
+		await render(<App />);
+		const onUrl = listen.mock.lastCall?.[1];
+		if (!onUrl) {
+			throw new Error("the app does not listen for links");
+		}
+
+		await act(() => onUrl({ url: controlsUrl }));
+
+		expect(screen.getByRole("header", { name: "Controls" })).toBeOnTheScreen();
+
+		expect(galleryRoute(controlsUrl)).toBe("controls");
+		for (const url of [
+			"exp://127.0.0.1:8081/--/gallery/controlsx",
+			"exp://127.0.0.1:8081/--/gallery/controls/more",
+			"exp://127.0.0.1:8081/?next=/--/gallery/controls",
+		]) {
+			expect(galleryRoute(url)).toBeNull();
+		}
 	});
 
 	it("REQ-001 AC-04: only the exact gallery paths are gallery routes", () => {
