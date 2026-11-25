@@ -16,6 +16,7 @@ const galleryHashes: readonly string[] = [
 	"#/gallery",
 	"#/gallery/rows",
 	"#/gallery/controls",
+	"#/gallery/pickers",
 ];
 
 export function needsGalleryBuild(screens: readonly Screen[]): boolean {
