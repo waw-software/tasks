@@ -1,13 +1,16 @@
 import { type LabelColor, type ProjectColor, theme } from "@waw/design-tokens";
 import { useState } from "react";
+import { Banner } from "./ui/Banner.tsx";
+import { Button } from "./ui/Button.tsx";
 import { Checkbox } from "./ui/Checkbox.tsx";
 import { GroupHeader } from "./ui/GroupHeader.tsx";
 import { LabelChip } from "./ui/LabelChip.tsx";
 import { ProgressBar } from "./ui/ProgressBar.tsx";
 import { ProjectMarker } from "./ui/ProjectMarker.tsx";
 import { TaskRow, type TaskRowProps } from "./ui/TaskRow.tsx";
+import { TextInput } from "./ui/TextInput.tsx";
 
-export type GallerySection = "components" | "rows";
+export type GallerySection = "components" | "rows" | "controls";
 
 const projects: readonly { name: string; color: ProjectColor }[] = [
 	{ name: "Home", color: "red" },
@@ -223,12 +226,88 @@ function RowsPage() {
 	);
 }
 
+function ControlsPage() {
+	const [address, setAddress] = useState("https://tasks.example.com");
+	const [token, setToken] = useState("example-only");
+	const [tokenEdited, setTokenEdited] = useState(false);
+	const [selected, setSelected] = useState("none");
+
+	const action = (label: string) => ({
+		label,
+		onPress: () => setSelected(label),
+	});
+
+	return (
+		<Page>
+			<div style={{ display: "flex", flexDirection: "column" }}>
+				<GalleryLink href="#/gallery">Back</GalleryLink>
+				<Title>Controls</Title>
+			</div>
+			<Section title="Text inputs">
+				<TextInput
+					label="Server address"
+					kind="url"
+					value={address}
+					onValueChange={setAddress}
+					helperText="Enter its address to continue."
+				/>
+				<TextInput
+					label="Access token"
+					kind="token"
+					value={token}
+					onValueChange={(value) => {
+						setToken(value);
+						setTokenEdited(true);
+					}}
+					{...(tokenEdited ? {} : { errorText: "Enter a valid access token." })}
+				/>
+			</Section>
+			<Section title="Banners">
+				<Banner
+					tone="warning"
+					title="Working offline"
+					message="3 changes are saved on this computer and will sync when the server is reachable."
+					action={action("Retry")}
+				/>
+				<Banner
+					tone="update"
+					title="Your server needs an update"
+					message="It runs API v1, this app supports v2. Newer features stay off until you update."
+					action={action("How to update")}
+				/>
+				<Banner tone="success" title="Server reachable · API v1" />
+			</Section>
+			<Section title="Buttons">
+				<Button variant="primary" fullWidth {...action("Connect")} />
+				<Button
+					variant="secondary"
+					fullWidth
+					{...action("Continue with limited features")}
+				/>
+				<div style={{ ...row, alignItems: "center" }}>
+					<Button variant="text" {...action("How to deploy with Docker")} />
+					<Button
+						variant="primary"
+						size="compact"
+						disabled
+						{...action("Check again")}
+					/>
+				</div>
+			</Section>
+			<p style={{ margin: 0, fontSize: theme.type.bodyMin }}>
+				Selected: {selected}
+			</p>
+		</Page>
+	);
+}
+
 function ComponentsPage() {
 	return (
 		<Page>
 			<div style={{ display: "flex", flexDirection: "column" }}>
 				<Title>Component gallery</Title>
 				<GalleryLink href="#/gallery/rows">Task rows</GalleryLink>
+				<GalleryLink href="#/gallery/controls">Controls</GalleryLink>
 			</div>
 			<Section title="Project markers">
 				<div style={{ ...row, columnGap: 20 }}>
@@ -297,5 +376,7 @@ export default function Gallery({
 }: {
 	section?: GallerySection;
 }): React.JSX.Element {
-	return section === "rows" ? <RowsPage /> : <ComponentsPage />;
+	if (section === "rows") return <RowsPage />;
+	if (section === "controls") return <ControlsPage />;
+	return <ComponentsPage />;
 }

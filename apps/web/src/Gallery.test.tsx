@@ -126,3 +126,100 @@ test("the rows page shows the task row fixtures", () => {
 
 	expect(checkbox("Pay rent").checked).toBe(true);
 });
+
+function statusWith(text: string) {
+	const status = screen
+		.getAllByRole("status")
+		.find((element) => element.textContent?.includes(text));
+	if (!status) throw new Error(`no status contains "${text}"`);
+	return status;
+}
+
+function press(name: string) {
+	fireEvent.click(screen.getByRole("button", { name }));
+}
+
+function descriptionOf(field: HTMLElement) {
+	const id = field.getAttribute("aria-describedby") ?? "";
+	return document.getElementById(id)?.textContent;
+}
+
+test("AC-30 Controls shows the waiting count and Retry", () => {
+	render(<Gallery section="controls" />);
+
+	expect(statusWith("Working offline").textContent).toContain(
+		"3 changes are saved on this computer and will sync when the server is reachable.",
+	);
+	expect(screen.getByText("Selected: none")).toBeDefined();
+
+	press("Retry");
+
+	expect(screen.getByText("Selected: Retry")).toBeDefined();
+});
+
+test("AC-35 Controls shows the update presentation", () => {
+	render(<Gallery section="controls" />);
+
+	expect(statusWith("Your server needs an update").textContent).toContain(
+		"It runs API v1, this app supports v2. Newer features stay off until you update.",
+	);
+
+	press("How to update");
+
+	expect(screen.getByText("Selected: How to update")).toBeDefined();
+});
+
+test("AC-28 Controls shows the Connect fields and the reachable result", () => {
+	render(<Gallery section="controls" />);
+
+	const address = screen.getByLabelText<HTMLInputElement>("Server address");
+	expect(address.type).toBe("url");
+	expect(address.value).toBe("https://tasks.example.com");
+	expect(descriptionOf(address)).toBe("Enter its address to continue.");
+	fireEvent.change(address, {
+		target: { value: "https://other.example.com" },
+	});
+	expect(address.value).toBe("https://other.example.com");
+
+	const token = screen.getByLabelText<HTMLInputElement>("Access token");
+	expect(token.type).toBe("password");
+	expect(token.value).toBe("example-only");
+	expect(token.getAttribute("aria-invalid")).toBe("true");
+	expect(descriptionOf(token)).toBe("Enter a valid access token.");
+
+	fireEvent.change(token, { target: { value: "example-only-2" } });
+
+	expect(token.value).toBe("example-only-2");
+	expect(token.getAttribute("aria-invalid")).toBeNull();
+	expect(screen.queryByText("Enter a valid access token.")).toBeNull();
+
+	fireEvent.change(token, { target: { value: "example-only" } });
+
+	expect(token.getAttribute("aria-invalid")).toBeNull();
+
+	const banner = statusWith("Server reachable · API v1").closest("[data-tone]");
+	expect(banner?.getAttribute("data-tone")).toBe("success");
+	expect(banner?.querySelector("button")).toBeNull();
+});
+
+test("Controls buttons report their selection and the disabled one does not", () => {
+	render(<Gallery section="controls" />);
+
+	press("Connect");
+	expect(screen.getByText("Selected: Connect")).toBeDefined();
+
+	const again = screen.getByRole<HTMLButtonElement>("button", {
+		name: "Check again",
+	});
+	expect(again.disabled).toBe(true);
+	fireEvent.click(again);
+	expect(screen.getByText("Selected: Connect")).toBeDefined();
+
+	press("Continue with limited features");
+	expect(
+		screen.getByText("Selected: Continue with limited features"),
+	).toBeDefined();
+
+	press("How to deploy with Docker");
+	expect(screen.getByText("Selected: How to deploy with Docker")).toBeDefined();
+});
