@@ -31,6 +31,12 @@ export default function App() {
 	if (galleryEnabled && hash === "#/gallery/navigation") {
 		return <Gallery section="navigation" />;
 	}
+	if (galleryEnabled && hash === "#/gallery/overlays") {
+		return <Gallery section="overlays" />;
+	}
+	if (galleryEnabled && hash === "#/gallery/overlays/quick-add") {
+		return <Gallery section="overlays-quick-add" />;
+	}
 	return (
 		<main>
 			<h1>WAW Tasks</h1>

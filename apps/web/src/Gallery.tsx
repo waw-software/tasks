@@ -1,5 +1,6 @@
 import { type LabelColor, type ProjectColor, theme } from "@waw/design-tokens";
 import { useState } from "react";
+import OverlaysGallery from "./OverlaysGallery.tsx";
 import { Banner } from "./ui/Banner.tsx";
 import { Button } from "./ui/Button.tsx";
 import { Checkbox } from "./ui/Checkbox.tsx";
@@ -21,7 +22,9 @@ export type GallerySection =
 	| "rows"
 	| "controls"
 	| "pickers"
-	| "navigation";
+	| "navigation"
+	| "overlays"
+	| "overlays-quick-add";
 
 const projects: readonly { name: string; color: ProjectColor }[] = [
 	{ name: "Home", color: "red" },
@@ -654,6 +657,7 @@ function ComponentsPage() {
 				<GalleryLink href="#/gallery/controls">Controls</GalleryLink>
 				<GalleryLink href="#/gallery/pickers">Pickers</GalleryLink>
 				<GalleryLink href={navigationHref}>Navigation</GalleryLink>
+				<GalleryLink href="#/gallery/overlays">Overlays</GalleryLink>
 			</div>
 			<Section title="Project markers">
 				<div style={{ ...row, columnGap: 20 }}>
@@ -726,5 +730,10 @@ export default function Gallery({
 	if (section === "controls") return <ControlsPage />;
 	if (section === "pickers") return <PickersPage />;
 	if (section === "navigation") return <NavigationPage />;
+	// Keyed: each route starts the page afresh, with its overlay open or closed.
+	if (section === "overlays") return <OverlaysGallery key={section} />;
+	if (section === "overlays-quick-add") {
+		return <OverlaysGallery key={section} quickAddOpen />;
+	}
 	return <ComponentsPage />;
 }
