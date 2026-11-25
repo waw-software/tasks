@@ -369,6 +369,17 @@ describe("Gallery", () => {
 		expect(onOpenNavigation).toHaveBeenCalledTimes(1);
 	});
 
+	it("Overlays calls onOpenOverlays", async () => {
+		const onOpenOverlays = jest.fn();
+		await render(
+			<Gallery onBack={jest.fn()} onOpenOverlays={onOpenOverlays} />,
+		);
+
+		await fireEvent.press(screen.getByRole("button", { name: "Overlays" }));
+
+		expect(onOpenOverlays).toHaveBeenCalledTimes(1);
+	});
+
 	it("REQ-004: Navigation switches destinations and shows Add only on Today", async () => {
 		await render(<Gallery section="navigation" onBack={jest.fn()} />);
 		const press = (name: string) =>

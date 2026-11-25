@@ -7,6 +7,7 @@ import {
 import { type ReactNode, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { fontFamilies } from "./fonts";
+import OverlaysGallery from "./OverlaysGallery";
 import { Banner } from "./ui/Banner";
 import { Button } from "./ui/Button";
 import { Checkbox } from "./ui/Checkbox";
@@ -156,7 +157,9 @@ export type GallerySection =
 	| "rows"
 	| "controls"
 	| "pickers"
-	| "navigation";
+	| "navigation"
+	| "overlays"
+	| "overlays-quick-add";
 
 const titles: Record<GallerySection, string> = {
 	components: "Component gallery",
@@ -164,6 +167,8 @@ const titles: Record<GallerySection, string> = {
 	controls: "Controls",
 	pickers: "Pickers",
 	navigation: "Navigation",
+	overlays: "Overlays",
+	"overlays-quick-add": "Overlays",
 };
 
 export default function Gallery({
@@ -173,6 +178,7 @@ export default function Gallery({
 	onOpenControls,
 	onOpenPickers,
 	onOpenNavigation,
+	onOpenOverlays,
 }: {
 	section?: GallerySection;
 	onBack: () => void;
@@ -180,6 +186,7 @@ export default function Gallery({
 	onOpenControls?: () => void;
 	onOpenPickers?: () => void;
 	onOpenNavigation?: () => void;
+	onOpenOverlays?: () => void;
 }) {
 	const header = (
 		<>
@@ -216,12 +223,16 @@ export default function Gallery({
 					<GalleryLink label="Controls" onPress={onOpenControls} />
 					<GalleryLink label="Pickers" onPress={onOpenPickers} />
 					<GalleryLink label="Navigation" onPress={onOpenNavigation} />
+					<GalleryLink label="Overlays" onPress={onOpenOverlays} />
 					<ComponentExamples />
 				</>
 			)}
 			{section === "rows" && <RowExamples />}
 			{section === "controls" && <ControlExamples />}
 			{section === "pickers" && <PickerExamples />}
+			{(section === "overlays" || section === "overlays-quick-add") && (
+				<OverlaysGallery quickAddOpen={section === "overlays-quick-add"} />
+			)}
 		</ScrollView>
 	);
 }

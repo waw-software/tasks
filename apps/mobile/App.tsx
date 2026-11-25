@@ -27,6 +27,12 @@ export function galleryRoute(url: string | null): GallerySection | null {
 	if (path.endsWith("/--/gallery/pickers")) {
 		return "pickers";
 	}
+	if (path.endsWith("/--/gallery/overlays")) {
+		return "overlays";
+	}
+	if (path.endsWith("/--/gallery/overlays/quick-add")) {
+		return "overlays-quick-add";
+	}
 	return path.endsWith("/--/gallery/navigation") ? "navigation" : null;
 }
 
@@ -34,6 +40,7 @@ export default function App() {
 	const [screen, setScreen] = useState<
 		"shell" | "gallery" | Exclude<GallerySection, "components">
 	>("shell");
+	const [linkCount, setLinkCount] = useState(0);
 	const [fontsLoaded, fontError] = useAppFonts();
 
 	useEffect(() => {
@@ -50,6 +57,10 @@ export default function App() {
 			const section = galleryRoute(url);
 			if (section) {
 				setScreen(section === "components" ? "gallery" : section);
+				// A repeated quick-add link remounts the screen to reopen its sheet.
+				if (section === "overlays-quick-add") {
+					setLinkCount((count) => count + 1);
+				}
 			}
 		};
 		Linking.getInitialURL().then((url) => open(url ?? null));
@@ -68,13 +79,14 @@ export default function App() {
 		return (
 			<>
 				<Gallery
-					key={section}
+					key={`${section}-${linkCount}`}
 					section={section}
 					onBack={() => setScreen(screen === "gallery" ? "shell" : "gallery")}
 					onOpenRows={() => setScreen("rows")}
 					onOpenControls={() => setScreen("controls")}
 					onOpenPickers={() => setScreen("pickers")}
 					onOpenNavigation={() => setScreen("navigation")}
+					onOpenOverlays={() => setScreen("overlays")}
 				/>
 				<StatusBar style="auto" />
 			</>
