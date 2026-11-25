@@ -1,4 +1,10 @@
-import { act, cleanup, render, screen } from "@testing-library/react";
+import {
+	act,
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+} from "@testing-library/react";
 import { afterEach, expect, test, vi } from "vitest";
 import App from "./App.tsx";
 
@@ -48,5 +54,36 @@ test("REQ-001 AC-03: only a gallery build opens #/gallery; a normal build keeps 
 	expect(levelOneHeading()).toBe("Component gallery");
 
 	changeHash("");
+	expect(levelOneHeading()).toBe("WAW Tasks");
+});
+
+async function followLink(name: string, heading: string) {
+	// jsdom navigates to the fragment and fires hashchange asynchronously.
+	fireEvent.click(screen.getByRole("link", { name }));
+	await screen.findByRole("heading", { level: 1, name: heading });
+}
+
+test("REQ-001 AC-03: only a gallery build opens #/gallery/rows", async () => {
+	vi.stubEnv("DEV", false);
+	vi.stubEnv("VITE_WAW_GALLERY", undefined);
+	window.location.hash = "#/gallery/rows";
+
+	render(<App />);
+	expect(levelOneHeading()).toBe("WAW Tasks");
+	cleanup();
+
+	vi.stubEnv("VITE_WAW_GALLERY", "1");
+	window.location.hash = "";
+
+	render(<App />);
+	expect(levelOneHeading()).toBe("WAW Tasks");
+
+	changeHash("#/gallery");
+	expect(levelOneHeading()).toBe("Component gallery");
+
+	await followLink("Task rows", "Task row gallery");
+	await followLink("Back", "Component gallery");
+
+	changeHash("#/gallery/rowsx");
 	expect(levelOneHeading()).toBe("WAW Tasks");
 });

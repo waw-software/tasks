@@ -1,8 +1,13 @@
 import { type LabelColor, type ProjectColor, theme } from "@waw/design-tokens";
+import { useState } from "react";
+import { Checkbox } from "./ui/Checkbox.tsx";
 import { GroupHeader } from "./ui/GroupHeader.tsx";
 import { LabelChip } from "./ui/LabelChip.tsx";
 import { ProgressBar } from "./ui/ProgressBar.tsx";
 import { ProjectMarker } from "./ui/ProjectMarker.tsx";
+import { TaskRow, type TaskRowProps } from "./ui/TaskRow.tsx";
+
+export type GallerySection = "components" | "rows";
 
 const projects: readonly { name: string; color: ProjectColor }[] = [
 	{ name: "Home", color: "red" },
@@ -18,6 +23,59 @@ const labels: readonly { name: string; color: LabelColor }[] = [
 	{ name: "@calls", color: "blue" },
 	{ name: "@waiting", color: "amber" },
 	{ name: "@errands", color: "violet" },
+];
+
+type RowFixture = Omit<TaskRowProps, "onCheckedChange">;
+
+const taskRows: readonly RowFixture[] = [
+	{
+		title: "Pay rent",
+		checked: false,
+		priority: 1,
+		scheduleText: "09:00 · repeats monthly",
+		labels: [
+			{ name: "@money", color: "green" },
+			{ name: "@waiting", color: "amber" },
+		],
+		project: { name: "Home", color: "red" },
+	},
+	{
+		title: "Review the pull request",
+		checked: false,
+		priority: 2,
+		selected: true,
+		project: { name: "Work", color: "blue" },
+	},
+	{
+		title: "Buy milk",
+		checked: true,
+		priority: 4,
+		scheduleText: "17:00",
+		labels: [{ name: "@errands", color: "violet" }],
+		project: { name: "Home", color: "red" },
+	},
+	{
+		title: "Pick up the dry cleaning",
+		checked: false,
+		priority: 3,
+		pendingSync: true,
+		subtasks: { done: 1, total: 3 },
+		labels: [{ name: "@waiting", color: "amber" }],
+		project: { name: "Personal", color: "green" },
+	},
+	{
+		title:
+			"Call the landlord about the broken heating in the bathroom before the weekend",
+		checked: false,
+		priority: 2,
+		scheduleText: "Tomorrow · 18:30",
+		labels: [
+			{ name: "@calls", color: "blue" },
+			{ name: "@waiting", color: "amber" },
+			{ name: "@errands", color: "violet" },
+		],
+		project: { name: "Apartment renovation", color: "amber" },
+	},
 ];
 
 const bodyFont = `${theme.font.body}, system-ui, sans-serif`;
@@ -51,7 +109,31 @@ function Section({
 	);
 }
 
-export default function Gallery(): React.JSX.Element {
+function GalleryLink({
+	href,
+	children,
+}: {
+	href: string;
+	children: React.ReactNode;
+}) {
+	return (
+		<a
+			href={href}
+			style={{
+				display: "inline-flex",
+				alignSelf: "flex-start",
+				alignItems: "center",
+				minHeight: theme.size.touchTarget,
+				fontSize: theme.type.bodyMin,
+				color: theme.color["accent-text"],
+			}}
+		>
+			{children}
+		</a>
+	);
+}
+
+function Page({ children }: { children: React.ReactNode }) {
 	return (
 		<main
 			style={{
@@ -65,16 +147,86 @@ export default function Gallery(): React.JSX.Element {
 				fontFamily: bodyFont,
 			}}
 		>
-			<h1
-				style={{
-					margin: 0,
-					fontFamily: headingFont,
-					fontSize: theme.type.screen,
-					fontWeight: theme.font.semibold,
-				}}
-			>
-				Component gallery
-			</h1>
+			{children}
+		</main>
+	);
+}
+
+function Title({ children }: { children: React.ReactNode }) {
+	return (
+		<h1
+			style={{
+				margin: 0,
+				fontFamily: headingFont,
+				fontSize: theme.type.screen,
+				fontWeight: theme.font.semibold,
+			}}
+		>
+			{children}
+		</h1>
+	);
+}
+
+function CheckboxExample({
+	label,
+	initialChecked,
+}: {
+	label: string;
+	initialChecked: boolean;
+}) {
+	const [checked, setChecked] = useState(initialChecked);
+	return (
+		<span
+			style={{
+				display: "inline-flex",
+				alignItems: "center",
+				fontSize: theme.type.bodyMin,
+			}}
+		>
+			<Checkbox checked={checked} label={label} onCheckedChange={setChecked} />
+			<span>{label}</span>
+		</span>
+	);
+}
+
+function TaskRowExample({ fixture }: { fixture: RowFixture }) {
+	const [checked, setChecked] = useState(fixture.checked);
+	return (
+		<TaskRow {...fixture} checked={checked} onCheckedChange={setChecked} />
+	);
+}
+
+function RowsPage() {
+	return (
+		<Page>
+			<div style={{ display: "flex", flexDirection: "column" }}>
+				<GalleryLink href="#/gallery">Back</GalleryLink>
+				<Title>Task row gallery</Title>
+			</div>
+			<Section title="Checkbox">
+				<div style={{ ...row, columnGap: 20 }}>
+					<CheckboxExample label="Unchecked example" initialChecked={false} />
+					<CheckboxExample label="Checked example" initialChecked />
+				</div>
+			</Section>
+			<Section title="Task rows">
+				<div style={{ maxWidth: 720 }}>
+					{taskRows.map((fixture) => (
+						<TaskRowExample key={fixture.title} fixture={fixture} />
+					))}
+				</div>
+			</Section>
+		</Page>
+	);
+}
+
+function ComponentsPage() {
+	return (
+		<Page>
+			<div style={{ display: "flex", flexDirection: "column" }}>
+				<Title>Component gallery</Title>
+				<GalleryLink href="#/gallery/rows">Task rows</GalleryLink>
+			</div>
 			<Section title="Project markers">
 				<div style={{ ...row, columnGap: 20 }}>
 					{projects.map(({ name, color }) => (
@@ -133,6 +285,14 @@ export default function Gallery(): React.JSX.Element {
 				</p>
 				<ProgressBar done={0} total={0} />
 			</Section>
-		</main>
+		</Page>
 	);
+}
+
+export default function Gallery({
+	section = "components",
+}: {
+	section?: GallerySection;
+}): React.JSX.Element {
+	return section === "rows" ? <RowsPage /> : <ComponentsPage />;
 }
