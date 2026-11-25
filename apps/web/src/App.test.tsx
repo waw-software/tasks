@@ -118,6 +118,36 @@ test("REQ-001 AC-03: Controls opens only in a gallery build and Back returns", a
 	expect(levelOneHeading()).toBe("WAW Tasks");
 });
 
+test("REQ-001 AC-03: Pickers opens only in a gallery build and Back returns", async () => {
+	vi.stubEnv("DEV", false);
+	vi.stubEnv("VITE_WAW_GALLERY", undefined);
+	window.location.hash = "#/gallery/pickers";
+
+	render(<App />);
+	expect(levelOneHeading()).toBe("WAW Tasks");
+	cleanup();
+
+	vi.stubEnv("VITE_WAW_GALLERY", "1");
+
+	render(<App />);
+	expect(levelOneHeading()).toBe("Pickers");
+	cleanup();
+
+	window.location.hash = "";
+
+	render(<App />);
+	expect(levelOneHeading()).toBe("WAW Tasks");
+
+	changeHash("#/gallery");
+	expect(levelOneHeading()).toBe("Component gallery");
+
+	await followLink("Pickers", "Pickers");
+	await followLink("Back", "Component gallery");
+
+	changeHash("#/gallery/pickersx");
+	expect(levelOneHeading()).toBe("WAW Tasks");
+});
+
 test("REQ-001 AC-03: a dev build opens #/gallery/controls directly", () => {
 	vi.stubEnv("DEV", true);
 	vi.stubEnv("VITE_WAW_GALLERY", undefined);

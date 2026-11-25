@@ -3,14 +3,17 @@ import { useState } from "react";
 import { Banner } from "./ui/Banner.tsx";
 import { Button } from "./ui/Button.tsx";
 import { Checkbox } from "./ui/Checkbox.tsx";
+import { ColorSwatchPicker } from "./ui/ColorSwatchPicker.tsx";
 import { GroupHeader } from "./ui/GroupHeader.tsx";
 import { LabelChip } from "./ui/LabelChip.tsx";
+import { type ListOption, OptionList } from "./ui/OptionList.tsx";
 import { ProgressBar } from "./ui/ProgressBar.tsx";
 import { ProjectMarker } from "./ui/ProjectMarker.tsx";
+import { SegmentedChoice } from "./ui/SegmentedChoice.tsx";
 import { TaskRow, type TaskRowProps } from "./ui/TaskRow.tsx";
 import { TextInput } from "./ui/TextInput.tsx";
 
-export type GallerySection = "components" | "rows" | "controls";
+export type GallerySection = "components" | "rows" | "controls" | "pickers";
 
 const projects: readonly { name: string; color: ProjectColor }[] = [
 	{ name: "Home", color: "red" },
@@ -83,6 +86,48 @@ const taskRows: readonly RowFixture[] = [
 		},
 	},
 ];
+
+const priorityOptions = ([1, 2, 3, 4] as const).map((priority) => ({
+	value: priority,
+	label: `P${priority}`,
+	priority,
+}));
+
+const labelOptions: readonly ListOption<string>[] = [
+	{ value: "money", label: "@money", labelColor: "green", detail: "6 tasks" },
+	{ value: "calls", label: "@calls", labelColor: "blue", detail: "3 tasks" },
+	{
+		value: "waiting",
+		label: "@waiting",
+		labelColor: "amber",
+		detail: "2 tasks",
+	},
+	{
+		value: "errands",
+		label: "@errands",
+		labelColor: "violet",
+		detail: "4 tasks",
+	},
+];
+
+const repeatOptions: readonly ListOption<string>[] = [
+	{ value: "never", label: "Never" },
+	{ value: "daily", label: "Every day" },
+	{ value: "weekly", label: "Every week on Sunday" },
+	{ value: "monthly", label: "Every month on the 1st" },
+	{ value: "custom", label: "Custom" },
+];
+
+const reminderOptions: readonly ListOption<string>[] = [
+	{ value: "at-time", label: "At the time of the task" },
+	{ value: "ten-minutes", label: "10 minutes before" },
+	{ value: "day-before", label: "1 day before" },
+];
+
+const specificReminder: ListOption<string> = {
+	value: "at-10",
+	label: "At 10:00",
+};
 
 const bodyFont = `${theme.font.body}, system-ui, sans-serif`;
 const headingFont = `"${theme.font.heading}", system-ui, sans-serif`;
@@ -301,6 +346,119 @@ function ControlsPage() {
 	);
 }
 
+function PickersPage() {
+	const [priority, setPriority] = useState<1 | 2 | 3 | 4>(1);
+	const [chosenLabels, setChosenLabels] = useState(["money"]);
+	const [newLabelPressed, setNewLabelPressed] = useState(false);
+	const [projectColor, setProjectColor] = useState<ProjectColor>("red");
+	const [labelColor, setLabelColor] = useState<LabelColor>("green");
+	const [repeat, setRepeat] = useState("monthly");
+	const [reminders, setReminders] = useState(["at-time", "day-before"]);
+	const [hasSpecificReminder, setHasSpecificReminder] = useState(false);
+
+	const addSpecificReminder = () => {
+		setHasSpecificReminder(true);
+		setReminders((current) =>
+			current.includes(specificReminder.value)
+				? current
+				: [...current, specificReminder.value],
+		);
+	};
+
+	return (
+		<Page>
+			<div style={{ display: "flex", flexDirection: "column" }}>
+				<GalleryLink href="#/gallery">Back</GalleryLink>
+				<Title>Pickers</Title>
+			</div>
+			<Section title="Priority">
+				<SegmentedChoice
+					label="Priority"
+					options={priorityOptions}
+					value={priority}
+					onValueChange={setPriority}
+					helperText="P1 tasks rise to the top of Today. P4 is the default."
+				/>
+			</Section>
+			<Section title="Labels">
+				<OptionList
+					mode="multiple"
+					label="Labels"
+					options={labelOptions}
+					value={chosenLabels}
+					onValueChange={setChosenLabels}
+					action={{
+						label: "New label",
+						onPress: () => setNewLabelPressed(true),
+					}}
+				/>
+				{newLabelPressed ? (
+					<p style={{ margin: 0, fontSize: theme.type.bodyMin }}>
+						Selected: New label
+					</p>
+				) : null}
+			</Section>
+			<Section title="Project colour">
+				<ColorSwatchPicker
+					palette="project"
+					label="Color"
+					value={projectColor}
+					onValueChange={setProjectColor}
+				/>
+				<div
+					style={{
+						display: "flex",
+						alignItems: "center",
+						gap: 8,
+						fontSize: theme.type.bodyMin,
+					}}
+				>
+					<ProjectMarker color={projectColor} />
+					<span>Home</span>
+					<span style={{ fontSize: theme.type.meta, color: theme.color.muted }}>
+						5 tasks
+					</span>
+				</div>
+			</Section>
+			<Section title="Label colour">
+				<ColorSwatchPicker
+					palette="label"
+					label="Label color"
+					value={labelColor}
+					onValueChange={setLabelColor}
+				/>
+				<div style={row}>
+					<LabelChip name="@money" color={labelColor} />
+				</div>
+			</Section>
+			<Section title="Repeat">
+				<OptionList
+					mode="single"
+					label="Repeat"
+					options={repeatOptions}
+					value={repeat}
+					onValueChange={setRepeat}
+					helperText="Next one appears after you complete this one: Tue 1 Dec, 09:00."
+				/>
+			</Section>
+			<Section title="Reminders">
+				<OptionList
+					mode="multiple"
+					label="Reminders"
+					options={
+						hasSpecificReminder
+							? [...reminderOptions, specificReminder]
+							: reminderOptions
+					}
+					value={reminders}
+					onValueChange={setReminders}
+					action={{ label: "At a specific time", onPress: addSpecificReminder }}
+				/>
+			</Section>
+		</Page>
+	);
+}
+
 function ComponentsPage() {
 	return (
 		<Page>
@@ -308,6 +466,7 @@ function ComponentsPage() {
 				<Title>Component gallery</Title>
 				<GalleryLink href="#/gallery/rows">Task rows</GalleryLink>
 				<GalleryLink href="#/gallery/controls">Controls</GalleryLink>
+				<GalleryLink href="#/gallery/pickers">Pickers</GalleryLink>
 			</div>
 			<Section title="Project markers">
 				<div style={{ ...row, columnGap: 20 }}>
@@ -378,5 +537,6 @@ export default function Gallery({
 }): React.JSX.Element {
 	if (section === "rows") return <RowsPage />;
 	if (section === "controls") return <ControlsPage />;
+	if (section === "pickers") return <PickersPage />;
 	return <ComponentsPage />;
 }
