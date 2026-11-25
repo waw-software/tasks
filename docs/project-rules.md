@@ -28,7 +28,15 @@ Open a screen's mockup and its PNG before building that screen.
 - Follow the build order in [SPEC.md](SPEC.md#8-build-order-proposed): one vertical slice per pull request, with API, screen and tests together.
 - Build tokens and base components first, so every later screen uses them.
 - Run each product slice end to end against a real server, from the compose file once it exists.
-- After each UI slice, compare the screen with its mockup PNG at 390 px (mobile) and 1440 px (desktop), and list the differences left in the pull request.
+- After each UI slice, run the visual check (see [Done](#done)) on every screen the slice changed.
+
+## Done
+
+A pull request that changes UI is done only when the visual check was run and its result is in the pull request:
+
+- Capture every changed screen with `pnpm --filter @waw/e2e visual --out out/visual/<run> --screen <id>`: web at 390 and 1440 px, the desktop window, and the iOS simulator. Each id is a screen and a surface, such as `shell.web-390`; new screens are added to the screen manifest of `packages/e2e` with their mockup PNG from `docs/design/screens/`.
+- The command writes `<id>.actual.png` and, when the screen has a mockup, `<id>.mockup.png` next to it. Compare each pair and list the differences left in the pull request.
+- A capture that could not run (for example `SKIP shell.ios: simctl unavailable` on a Mac without Xcode) and a screen without a mockup are listed in the pull request as not covered.
 
 ## Tests
 
@@ -38,7 +46,7 @@ General rules: [testing rules](../.claude/rules/testing.md).
 | --- | --- |
 | Static | Biome (format, lint) and `tsc --noEmit` |
 | Unit | Vitest for server, worker, web and desktop; jest-expo with React Native Testing Library for mobile |
-| End to end | Not yet; Playwright is planned |
+| End to end | Playwright against the built server and web client (`scripts/env.sh e2e`, and the `e2e` workflow on every pull request); the visual check uses Playwright for web and desktop and `simctl` for iOS |
 
 Tests cover these edge cases of the domain:
 
@@ -56,3 +64,5 @@ Tests cover these edge cases of the domain:
 - `pnpm test:unit`, `pnpm build`
 - `pnpm --filter @waw/<app> dev` for one app
 - `scripts/check.sh` is the full check; `scripts/env.sh setup|fast|reset` sets up, runs the fast check, or resets.
+- `scripts/env.sh e2e` runs the end-to-end specs; once per machine, first `pnpm --filter @waw/e2e exec playwright install chromium`.
+- `pnpm --filter @waw/e2e visual --out out/visual/<run> [--screen <id>]...` runs the visual check; with no `--screen` it captures every screen. The desktop capture needs `pnpm --filter @waw/desktop exec install-electron` once; iOS needs Xcode, a booted simulator showing the screen, and `--ios-device <UDID>` (from `xcrun simctl list devices booted`).
