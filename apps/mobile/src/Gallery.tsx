@@ -1,14 +1,22 @@
-import { type LabelColor, type ProjectColor, theme } from "@waw/design-tokens";
+import {
+	type LabelColor,
+	type Priority,
+	type ProjectColor,
+	theme,
+} from "@waw/design-tokens";
 import { type ReactNode, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { fontFamilies } from "./fonts";
 import { Banner } from "./ui/Banner";
 import { Button } from "./ui/Button";
 import { Checkbox } from "./ui/Checkbox";
+import { ColorSwatchPicker } from "./ui/ColorSwatchPicker";
 import { GroupHeader } from "./ui/GroupHeader";
 import { LabelChip, type LabelChipProps } from "./ui/LabelChip";
+import { type ListOption, OptionList } from "./ui/OptionList";
 import { ProgressBar } from "./ui/ProgressBar";
 import { ProjectMarker } from "./ui/ProjectMarker";
+import { SegmentedChoice } from "./ui/SegmentedChoice";
 import { TaskRow, type TaskRowProps } from "./ui/TaskRow";
 import { TextInput } from "./ui/TextInput";
 
@@ -27,6 +35,49 @@ const labels: readonly { color: LabelColor; name: string }[] = [
 	{ color: "amber", name: "@waiting" },
 	{ color: "violet", name: "@errands" },
 ];
+
+const priorities = [
+	{ value: 1, label: "P1", priority: 1 },
+	{ value: 2, label: "P2", priority: 2 },
+	{ value: 3, label: "P3", priority: 3 },
+	{ value: 4, label: "P4", priority: 4 },
+] as const;
+
+const labelOptions: readonly ListOption<string>[] = [
+	{ value: "money", label: "@money", labelColor: "green", detail: "6 tasks" },
+	{ value: "calls", label: "@calls", labelColor: "blue", detail: "3 tasks" },
+	{
+		value: "waiting",
+		label: "@waiting",
+		labelColor: "amber",
+		detail: "2 tasks",
+	},
+	{
+		value: "errands",
+		label: "@errands",
+		labelColor: "violet",
+		detail: "4 tasks",
+	},
+];
+
+const repeatOptions: readonly ListOption<string>[] = [
+	{ value: "never", label: "Never" },
+	{ value: "daily", label: "Every day" },
+	{ value: "weekly", label: "Every week on Sunday" },
+	{ value: "monthly", label: "Every month on the 1st" },
+	{ value: "custom", label: "Custom" },
+];
+
+const reminderOptions: readonly ListOption<string>[] = [
+	{ value: "at-time", label: "At the time of the task" },
+	{ value: "ten-minutes", label: "10 minutes before" },
+	{ value: "day-before", label: "1 day before" },
+];
+
+const specificReminder: ListOption<string> = {
+	value: "at-10",
+	label: "At 10:00",
+};
 
 type RowFixture = Omit<TaskRowProps, "checked" | "onCheckedChange"> & {
 	initiallyChecked?: boolean;
@@ -82,12 +133,13 @@ const rows: readonly RowFixture[] = [
 	},
 ];
 
-export type GallerySection = "components" | "rows" | "controls";
+export type GallerySection = "components" | "rows" | "controls" | "pickers";
 
 const titles: Record<GallerySection, string> = {
 	components: "Component gallery",
 	rows: "Task row gallery",
 	controls: "Controls",
+	pickers: "Pickers",
 };
 
 export default function Gallery({
@@ -95,11 +147,13 @@ export default function Gallery({
 	onBack,
 	onOpenRows,
 	onOpenControls,
+	onOpenPickers,
 }: {
 	section?: GallerySection;
 	onBack: () => void;
 	onOpenRows?: () => void;
 	onOpenControls?: () => void;
+	onOpenPickers?: () => void;
 }) {
 	return (
 		<ScrollView
@@ -124,11 +178,13 @@ export default function Gallery({
 				<>
 					<GalleryLink label="Task rows" onPress={onOpenRows} />
 					<GalleryLink label="Controls" onPress={onOpenControls} />
+					<GalleryLink label="Pickers" onPress={onOpenPickers} />
 					<ComponentExamples />
 				</>
 			)}
 			{section === "rows" && <RowExamples />}
 			{section === "controls" && <ControlExamples />}
+			{section === "pickers" && <PickerExamples />}
 		</ScrollView>
 	);
 }
@@ -270,6 +326,113 @@ function ControlExamples() {
 			</Section>
 
 			<Text style={styles.selection}>Selected: {selected}</Text>
+		</>
+	);
+}
+
+function PickerExamples() {
+	const [priority, setPriority] = useState<Priority | null>(1);
+	const [chosenLabels, setChosenLabels] = useState<string[]>(["money"]);
+	const [projectColor, setProjectColor] = useState<ProjectColor>("red");
+	const [labelColor, setLabelColor] = useState<LabelColor>("green");
+	const [repeat, setRepeat] = useState<string | null>("monthly");
+	const [reminders, setReminders] = useState<string[]>([
+		"at-time",
+		"day-before",
+	]);
+	const [hasSpecificReminder, setHasSpecificReminder] = useState(false);
+	const [selected, setSelected] = useState("none");
+
+	const addSpecificReminder = () => {
+		setHasSpecificReminder(true);
+		setReminders((current) =>
+			current.includes(specificReminder.value)
+				? current
+				: [...current, specificReminder.value],
+		);
+	};
+
+	return (
+		<>
+			<Section caption="Priority">
+				<SegmentedChoice
+					label="Priority"
+					options={priorities}
+					value={priority}
+					onValueChange={setPriority}
+					helperText="P1 tasks rise to the top of Today. P4 is the default."
+				/>
+			</Section>
+
+			<Section caption="Labels">
+				<OptionList
+					mode="multiple"
+					label="Labels"
+					options={labelOptions}
+					value={chosenLabels}
+					onValueChange={setChosenLabels}
+					action={{
+						label: "New label",
+						onPress: () => setSelected("New label"),
+					}}
+				/>
+				<Text style={styles.selection}>Selected: {selected}</Text>
+			</Section>
+
+			<Section caption="Project colour">
+				<ColorSwatchPicker
+					palette="project"
+					label="Color"
+					value={projectColor}
+					onValueChange={setProjectColor}
+				/>
+				<View style={styles.project}>
+					<ProjectMarker color={projectColor} />
+					<Text style={styles.projectName}>Home</Text>
+					<Text style={styles.caption}>5 tasks</Text>
+				</View>
+			</Section>
+
+			<Section caption="Label colour">
+				<ColorSwatchPicker
+					palette="label"
+					label="Label color"
+					value={labelColor}
+					onValueChange={setLabelColor}
+				/>
+				<View style={styles.chips}>
+					<LabelChip name="@money" color={labelColor} />
+				</View>
+			</Section>
+
+			<Section caption="Repeat">
+				<OptionList
+					mode="single"
+					label="Repeat"
+					options={repeatOptions}
+					value={repeat}
+					onValueChange={setRepeat}
+					helperText="Next one appears after you complete this one: Tue 1 Dec, 09:00."
+				/>
+			</Section>
+
+			<Section caption="Reminders">
+				<OptionList
+					mode="multiple"
+					label="Reminders"
+					options={
+						hasSpecificReminder
+							? [...reminderOptions, specificReminder]
+							: reminderOptions
+					}
+					value={reminders}
+					onValueChange={setReminders}
+					action={{
+						label: "At a specific time",
+						onPress: addSpecificReminder,
+					}}
+				/>
+			</Section>
 		</>
 	);
 }
