@@ -1,0 +1,42 @@
+/* Backgrounds and dividers live here, not inline, so that the state rules can
+   override them. */
+.waw-option-row {
+	background-color: var(--waw-bg);
+	cursor: pointer;
+}
+
+.waw-option-row + .waw-option-row {
+	border-top: var(--waw-border) solid var(--waw-divider);
+}
+
+/* The list does not clip, so that the focus ring stays whole: the end rows
+   follow its corners themselves. */
+.waw-option-row:first-child {
+	border-top-left-radius: var(--waw-radius-inner);
+	border-top-right-radius: var(--waw-radius-inner);
+}
+
+.waw-option-row:last-child {
+	border-bottom-left-radius: var(--waw-radius-inner);
+	border-bottom-right-radius: var(--waw-radius-inner);
+}
+
+@media (hover: hover) and (pointer: fine) {
+	.waw-option-row:not([data-disabled]):hover {
+		background-color: var(--waw-bg-hover);
+	}
+}
+
+/* After hover, so that pressed wins. */
+.waw-option-row:not([data-disabled]):active {
+	background-color: var(--waw-bg-active);
+}
+
+.waw-option-row:has(input:focus-visible) {
+	outline: var(--waw-focus-width) solid var(--waw-focus);
+	outline-offset: var(--waw-focus-offset);
+}
+
+.waw-option-row[data-disabled] {
+	cursor: not-allowed;
+}
