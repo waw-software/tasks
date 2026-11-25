@@ -99,7 +99,7 @@ export function SegmentedChoice<T extends string | number>({
 			<div
 				style={{
 					display: "grid",
-					gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+					gridTemplateColumns: `repeat(auto-fit, minmax(${theme.size.touchTarget}px, 1fr))`,
 					gap: theme.space.segmentGap,
 				}}
 			>
