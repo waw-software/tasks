@@ -162,6 +162,21 @@ describe("parseArgs", () => {
 		expect(needs("gallery.web-390")).toBe(true);
 		expect(needs("gallery.electron")).toBe(true);
 		expect(needs("shell.web-390", "gallery.ios")).toBe(false);
+		expect(needs("gallery-rows.web-390")).toBe(true);
+		expect(needs("gallery-rows.electron")).toBe(true);
+		expect(needs("gallery-rows.ios")).toBe(false);
+		expect(
+			needsGalleryBuild([
+				{
+					id: "other.web",
+					surface: "web",
+					route: "/#/gallery/other",
+					viewport: { width: 1, height: 2 },
+					readyHeading: "H",
+					mockup: null,
+				},
+			]),
+		).toBe(false);
 	});
 });
 
@@ -176,12 +191,18 @@ describe("manifest", () => {
 			"gallery.web-1440",
 			"gallery.electron",
 			"gallery.ios",
+			"gallery-rows.web-390",
+			"gallery-rows.web-1440",
+			"gallery-rows.electron",
+			"gallery-rows.ios",
 		]);
-		expect(new Set(realScreens.map((s) => s.id)).size).toBe(8);
+		expect(new Set(realScreens.map((s) => s.id)).size).toBe(12);
 		const viewports = realScreens.flatMap((s) =>
 			s.surface === "web" ? [s.viewport] : [],
 		);
 		expect(viewports).toEqual([
+			{ width: 390, height: 844 },
+			{ width: 1440, height: 900 },
 			{ width: 390, height: 844 },
 			{ width: 1440, height: 900 },
 			{ width: 390, height: 844 },
@@ -199,6 +220,9 @@ describe("manifest", () => {
 			["gallery.web-390", "/#/gallery", "Component gallery"],
 			["gallery.web-1440", "/#/gallery", "Component gallery"],
 			["gallery.electron", "#/gallery", "Component gallery"],
+			["gallery-rows.web-390", "/#/gallery/rows", "Task row gallery"],
+			["gallery-rows.web-1440", "/#/gallery/rows", "Task row gallery"],
+			["gallery-rows.electron", "#/gallery/rows", "Task row gallery"],
 		]);
 		expect(realScreens.every((s) => s.mockup === null)).toBe(true);
 	});
