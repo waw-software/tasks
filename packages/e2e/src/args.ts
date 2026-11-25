@@ -5,11 +5,20 @@ export type CaptureRequest = {
 	outDir: string;
 	screens: Screen[];
 	iosDevice: string | undefined;
+	iosConflict: boolean; // true when more than one selected screen has surface "ios"
 };
 export type FsChecks = {
 	exists(repoRelativePath: string): boolean;
 	isIgnored(repoRelativeDir: string): boolean;
 };
+
+export function needsGalleryBuild(screens: readonly Screen[]): boolean {
+	return screens.some(
+		(s) =>
+			(s.surface === "web" && s.route.includes("#/gallery")) ||
+			(s.surface === "electron" && s.hash === "#/gallery"),
+	);
+}
 
 export function parseArgs(
 	argv: readonly string[],
@@ -74,5 +83,6 @@ export function parseArgs(
 			throw new Error(`mockup missing for ${s.id}: ${s.mockup}`);
 		}
 	}
-	return { outDir, screens: selected, iosDevice };
+	const iosConflict = selected.filter((s) => s.surface === "ios").length > 1;
+	return { outDir, screens: selected, iosDevice, iosConflict };
 }

@@ -65,4 +65,4 @@ Tests cover these edge cases of the domain:
 - `pnpm --filter @waw/<app> dev` for one app
 - `scripts/check.sh` is the full check; `scripts/env.sh setup|fast|reset` sets up, runs the fast check, or resets.
 - `scripts/env.sh e2e` runs the end-to-end specs; once per machine, first `pnpm --filter @waw/e2e exec playwright install chromium`.
-- `pnpm --filter @waw/e2e visual --out out/visual/<run> [--screen <id>]...` runs the visual check; with no `--screen` it captures every screen. The desktop capture needs `pnpm --filter @waw/desktop exec install-electron` once; iOS needs Xcode, a booted simulator showing the screen, and `--ios-device <UDID>` (from `xcrun simctl list devices booted`).
+- `pnpm --filter @waw/e2e visual --out out/visual/<run> [--screen <id>]...` runs the visual check; with no `--screen` it captures every screen. iOS is captured one screen per run: when more than one iOS screen is selected (also with no `--screen`), each prints a `SKIP` line. The desktop capture needs `pnpm --filter @waw/desktop exec install-electron` once; iOS needs Xcode, a booted simulator showing the screen, and `--ios-device <UDID>` (from `xcrun simctl list devices booted`).
