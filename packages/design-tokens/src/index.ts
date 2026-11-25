@@ -116,6 +116,7 @@ export const theme = {
 		tab: 11,
 		chip: 13,
 		taskTitleLineHeight: 22,
+		controlSupport: 14,
 	},
 	radius: {
 		chip: 6,
@@ -140,6 +141,16 @@ export const theme = {
 		taskRowMetaRowGap: 6,
 		taskRowMetaColumnGap: 8,
 		taskRowProjectGap: 6,
+		focusOffset: 2,
+		buttonInline: 18,
+		primaryButtonInline: 22,
+		textButtonInline: 8,
+		inputInline: 16,
+		fieldGap: 6,
+		bannerBlock: 12,
+		bannerInline: 14,
+		bannerGap: 8,
+		bannerCopyGap: 2,
 	},
 	size: {
 		touchTarget: 44,
@@ -157,6 +168,10 @@ export const theme = {
 		projectMarker: 8,
 		checkbox: 22,
 		progress: 6,
+		desktopPrimary: 52,
+		desktopInput: 50,
+		controlBorder: 1,
+		focusRing: 2,
 	},
 } as const satisfies Readonly<Record<string, unknown>> & {
 	color: Readonly<Record<ColorKey, string>>;

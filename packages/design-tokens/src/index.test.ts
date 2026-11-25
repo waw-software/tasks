@@ -94,6 +94,7 @@ test("DESIGN §2 type roles, fonts and weights", () => {
 		tab: 11,
 		chip: 13,
 		taskTitleLineHeight: 22,
+		controlSupport: 14,
 	});
 });
 
@@ -121,6 +122,16 @@ test("DESIGN §2–3 radii, spacing and sizes", () => {
 		taskRowMetaRowGap: 6,
 		taskRowMetaColumnGap: 8,
 		taskRowProjectGap: 6,
+		focusOffset: 2,
+		buttonInline: 18,
+		primaryButtonInline: 22,
+		textButtonInline: 8,
+		inputInline: 16,
+		fieldGap: 6,
+		bannerBlock: 12,
+		bannerInline: 14,
+		bannerGap: 8,
+		bannerCopyGap: 2,
 	});
 	expect(theme.size).toEqual({
 		touchTarget: 44,
@@ -138,5 +149,9 @@ test("DESIGN §2–3 radii, spacing and sizes", () => {
 		projectMarker: 8,
 		checkbox: 22,
 		progress: 6,
+		desktopPrimary: 52,
+		desktopInput: 50,
+		controlBorder: 1,
+		focusRing: 2,
 	});
 });

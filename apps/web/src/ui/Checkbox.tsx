@@ -19,6 +19,8 @@ export function Checkbox({
 			style={
 				{
 					"--waw-focus": theme.color["accent-text"],
+					"--waw-focus-width": `${theme.size.focusRing}px`,
+					"--waw-focus-offset": `${theme.space.focusOffset}px`,
 					position: "relative",
 					display: "flex",
 					flexShrink: 0,
@@ -55,7 +57,7 @@ export function Checkbox({
 					boxSizing: "border-box",
 					width: theme.size.checkbox,
 					height: theme.size.checkbox,
-					borderWidth: 1,
+					borderWidth: theme.size.controlBorder,
 					borderStyle: "solid",
 					borderColor: edge,
 					borderRadius: theme.radius.checkbox,

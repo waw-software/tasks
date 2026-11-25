@@ -84,4 +84,28 @@ export const screens: readonly Screen[] = [
 		mockup: null,
 	},
 	{ id: "gallery-rows.ios", surface: "ios", mockup: null },
+	{
+		id: "gallery-controls.web-390",
+		surface: "web",
+		route: "/#/gallery/controls",
+		viewport: { width: 390, height: 844 },
+		readyHeading: "Controls",
+		mockup: null,
+	},
+	{
+		id: "gallery-controls.web-1440",
+		surface: "web",
+		route: "/#/gallery/controls",
+		viewport: { width: 1440, height: 900 },
+		readyHeading: "Controls",
+		mockup: null,
+	},
+	{
+		id: "gallery-controls.electron",
+		surface: "electron",
+		hash: "#/gallery/controls",
+		readyHeading: "Controls",
+		mockup: null,
+	},
+	{ id: "gallery-controls.ios", surface: "ios", mockup: null },
 ];

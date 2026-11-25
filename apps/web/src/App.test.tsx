@@ -87,3 +87,43 @@ test("REQ-001 AC-03: only a gallery build opens #/gallery/rows", async () => {
 	changeHash("#/gallery/rowsx");
 	expect(levelOneHeading()).toBe("WAW Tasks");
 });
+
+test("REQ-001 AC-03: Controls opens only in a gallery build and Back returns", async () => {
+	vi.stubEnv("DEV", false);
+	vi.stubEnv("VITE_WAW_GALLERY", undefined);
+	window.location.hash = "#/gallery/controls";
+
+	render(<App />);
+	expect(levelOneHeading()).toBe("WAW Tasks");
+	cleanup();
+
+	vi.stubEnv("VITE_WAW_GALLERY", "1");
+
+	render(<App />);
+	expect(levelOneHeading()).toBe("Controls");
+	cleanup();
+
+	window.location.hash = "";
+
+	render(<App />);
+	expect(levelOneHeading()).toBe("WAW Tasks");
+
+	changeHash("#/gallery");
+	expect(levelOneHeading()).toBe("Component gallery");
+
+	await followLink("Controls", "Controls");
+	await followLink("Back", "Component gallery");
+
+	changeHash("#/gallery/controlsx");
+	expect(levelOneHeading()).toBe("WAW Tasks");
+});
+
+test("REQ-001 AC-03: a dev build opens #/gallery/controls directly", () => {
+	vi.stubEnv("DEV", true);
+	vi.stubEnv("VITE_WAW_GALLERY", undefined);
+	window.location.hash = "#/gallery/controls";
+
+	render(<App />);
+
+	expect(levelOneHeading()).toBe("Controls");
+});

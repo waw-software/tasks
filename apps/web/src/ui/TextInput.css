@@ -1,0 +1,4 @@
+.waw-input:focus-visible {
+	outline: var(--waw-focus-width) solid var(--waw-focus);
+	outline-offset: var(--waw-focus-offset);
+}

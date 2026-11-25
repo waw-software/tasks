@@ -22,6 +22,9 @@ export default function App() {
 	if (galleryEnabled && hash === "#/gallery/rows") {
 		return <Gallery section="rows" />;
 	}
+	if (galleryEnabled && hash === "#/gallery/controls") {
+		return <Gallery section="controls" />;
+	}
 	return (
 		<main>
 			<h1>WAW Tasks</h1>

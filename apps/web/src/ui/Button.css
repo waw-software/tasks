@@ -1,0 +1,28 @@
+/* Colours live here, not inline, so that the state rules can override them. */
+.waw-button {
+	background-color: var(--waw-bg);
+	color: var(--waw-ink);
+	border: var(--waw-border) solid var(--waw-edge);
+}
+
+@media (hover: hover) and (pointer: fine) {
+	.waw-button:enabled:hover {
+		background-color: var(--waw-bg-hover);
+		color: var(--waw-ink-hover);
+	}
+}
+
+/* After hover, so that pressed wins. */
+.waw-button:enabled:active {
+	background-color: var(--waw-bg-active);
+	color: var(--waw-ink-active);
+}
+
+.waw-button:focus-visible {
+	outline: var(--waw-focus-width) solid var(--waw-focus);
+	outline-offset: var(--waw-focus-offset);
+}
+
+.waw-button:disabled {
+	cursor: not-allowed;
+}

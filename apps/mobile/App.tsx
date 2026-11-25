@@ -18,11 +18,16 @@ export function galleryRoute(url: string | null): GallerySection | null {
 	if (path.endsWith("/--/gallery")) {
 		return "components";
 	}
-	return path.endsWith("/--/gallery/rows") ? "rows" : null;
+	if (path.endsWith("/--/gallery/rows")) {
+		return "rows";
+	}
+	return path.endsWith("/--/gallery/controls") ? "controls" : null;
 }
 
 export default function App() {
-	const [screen, setScreen] = useState<"shell" | "gallery" | "rows">("shell");
+	const [screen, setScreen] = useState<
+		"shell" | "gallery" | "rows" | "controls"
+	>("shell");
 	const [fontsLoaded, fontError] = useAppFonts();
 
 	useEffect(() => {
@@ -38,7 +43,7 @@ export default function App() {
 		const open = (url: string | null) => {
 			const section = galleryRoute(url);
 			if (section) {
-				setScreen(section === "rows" ? "rows" : "gallery");
+				setScreen(section === "components" ? "gallery" : section);
 			}
 		};
 		Linking.getInitialURL().then((url) => open(url ?? null));
@@ -53,14 +58,15 @@ export default function App() {
 	}
 
 	if (screen !== "shell") {
-		const section = screen === "rows" ? "rows" : "components";
+		const section = screen === "gallery" ? "components" : screen;
 		return (
 			<>
 				<Gallery
 					key={section}
 					section={section}
-					onBack={() => setScreen(screen === "rows" ? "gallery" : "shell")}
+					onBack={() => setScreen(screen === "gallery" ? "shell" : "gallery")}
 					onOpenRows={() => setScreen("rows")}
+					onOpenControls={() => setScreen("controls")}
 				/>
 				<StatusBar style="auto" />
 			</>
