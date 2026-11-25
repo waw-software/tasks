@@ -1,11 +1,31 @@
 import { theme } from "@waw/design-tokens";
 import { StatusBar } from "expo-status-bar";
-import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import Gallery from "./src/Gallery";
+
+export function isGalleryUrl(url: string | null): boolean {
+	return url?.endsWith("/--/gallery") === true;
+}
 
 export default function App() {
 	const [screen, setScreen] = useState<"shell" | "gallery">("shell");
+
+	useEffect(() => {
+		if (!__DEV__) {
+			return;
+		}
+		const open = (url: string | null) => {
+			if (isGalleryUrl(url)) {
+				setScreen("gallery");
+			}
+		};
+		Linking.getInitialURL().then((url) => open(url ?? null));
+		const subscription = Linking.addEventListener("url", ({ url }) =>
+			open(url),
+		);
+		return () => subscription.remove();
+	}, []);
 
 	if (screen === "gallery") {
 		return (
