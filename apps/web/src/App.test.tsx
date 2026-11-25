@@ -27,19 +27,17 @@ function levelOneHeading() {
 	return screen.getByRole("heading", { level: 1 }).textContent;
 }
 
-test("REQ-001 AC-03: a normal build shows the shell at #/gallery", () => {
+test("REQ-001 AC-03: only a gallery build opens #/gallery; a normal build keeps the shell", () => {
 	vi.stubEnv("DEV", false);
-	vi.stubEnv("VITE_WAW_GALLERY", "0");
+	vi.stubEnv("VITE_WAW_GALLERY", undefined);
+	expect(import.meta.env.VITE_WAW_GALLERY).toBeUndefined();
 	window.location.hash = "#/gallery";
 
 	render(<App />);
-
 	expect(levelOneHeading()).toBe("WAW Tasks");
 	expect(screen.queryByText("Component gallery")).toBeNull();
-});
+	cleanup();
 
-test("REQ-001 AC-03: a gallery build opens the gallery on hash change and returns to the shell", () => {
-	vi.stubEnv("DEV", false);
 	vi.stubEnv("VITE_WAW_GALLERY", "1");
 	window.location.hash = "";
 
