@@ -1,5 +1,16 @@
+import type { SetupClaimResponse } from "@waw/api-contract";
 import { useEffect, useState } from "react";
 import Gallery from "./Gallery.tsx";
+import { Setup } from "./Setup.tsx";
+
+// Synthetic values for the visual check; the image is a one-pixel placeholder.
+const setupSample: SetupClaimResponse = {
+	serverUrl: "https://tasks.example.com",
+	accessToken: `waw_dev_${"A".repeat(43)}`,
+	pairingLink: `https://tasks.example.com/pair#token=waw_pair_${"B".repeat(43)}`,
+	qrDataUrl:
+		"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+};
 
 function useHash() {
 	const [hash, setHash] = useState(() => window.location.hash);
@@ -16,6 +27,12 @@ export default function App() {
 	const galleryEnabled =
 		import.meta.env.DEV || import.meta.env.VITE_WAW_GALLERY === "1";
 
+	if (window.location.pathname === "/setup") {
+		return <Setup />;
+	}
+	if (galleryEnabled && hash === "#/gallery/setup") {
+		return <Setup initialResult={setupSample} />;
+	}
 	if (galleryEnabled && hash === "#/gallery") {
 		return <Gallery />;
 	}

@@ -248,3 +248,42 @@ test("REQ-001 AC-03: Overlays and its quick-add route open only in a gallery bui
 		expect(levelOneHeading()).toBe("WAW Tasks");
 	}
 });
+
+test("REQ-011 AC-39: App: /setup opens the setup page", () => {
+	vi.stubEnv("DEV", false);
+	vi.stubEnv("VITE_WAW_GALLERY", undefined);
+	window.history.pushState(null, "", "/setup");
+
+	render(<App />);
+
+	expect(levelOneHeading()).toBe("Set up WAW Tasks");
+	window.history.pushState(null, "", "/");
+});
+
+test("REQ-011 AC-39: App: #/gallery/setup shows the revealed sample only in a gallery build", () => {
+	vi.stubEnv("DEV", false);
+	vi.stubEnv("VITE_WAW_GALLERY", undefined);
+	window.location.hash = "#/gallery/setup";
+
+	render(<App />);
+	expect(levelOneHeading()).toBe("WAW Tasks");
+	expect(screen.queryByLabelText("Access token")).toBeNull();
+	cleanup();
+
+	vi.stubEnv("VITE_WAW_GALLERY", "1");
+
+	render(<App />);
+	expect(levelOneHeading()).toBe("Connect your devices");
+	expect(
+		screen.getByLabelText<HTMLTextAreaElement>("Server address").value,
+	).toBe("https://tasks.example.com");
+	expect(screen.getByLabelText<HTMLTextAreaElement>("Access token").value).toBe(
+		`waw_dev_${"A".repeat(43)}`,
+	);
+	expect(screen.getByLabelText<HTMLTextAreaElement>("Pairing link").value).toBe(
+		`https://tasks.example.com/pair#token=waw_pair_${"B".repeat(43)}`,
+	);
+	expect(
+		screen.getByRole("img", { name: "QR code for the pairing link" }),
+	).toBeDefined();
+});
