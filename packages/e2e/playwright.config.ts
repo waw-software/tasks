@@ -11,7 +11,7 @@ if (!process.env.DATABASE_URL) {
 
 export default defineConfig({
 	testDir: "tests",
-	testMatch: ["smoke.spec.ts", "migrations.spec.ts"],
+	testMatch: ["smoke.spec.ts", "migrations.spec.ts", "auth.spec.ts"],
 	retries: 0,
 	workers: 1,
 	forbidOnly: true,
