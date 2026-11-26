@@ -17,6 +17,7 @@ export default defineConfig({
 		"auth.spec.ts",
 		"runtime.spec.ts",
 		"pairing.spec.ts",
+		"setup.spec.ts",
 	],
 	retries: 0,
 	workers: 1,

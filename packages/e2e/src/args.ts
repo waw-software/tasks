@@ -20,6 +20,7 @@ const galleryHashes: readonly string[] = [
 	"#/gallery/navigation",
 	"#/gallery/overlays",
 	"#/gallery/overlays/quick-add",
+	"#/gallery/setup",
 ];
 
 export function needsGalleryBuild(screens: readonly Screen[]): boolean {
