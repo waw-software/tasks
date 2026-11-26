@@ -5,18 +5,24 @@ import { loggerOptions, notFound } from "./auth/device-auth.js";
 import { createDb } from "./auth/device-store.js";
 import { readServerConfig, redactDatabaseUrl } from "./db/config.js";
 import { migrateDatabase, openDatabase } from "./db/database.js";
+import { parsePublicUrl, publicAddressTrustProxy } from "./public-url.js";
 import { createRuntime } from "./runtime.js";
 import { resolveWebRoot } from "./web-root.js";
 
 async function main(): Promise<void> {
-	const server = Fastify({ logger: loggerOptions });
+	const server = Fastify({
+		logger: loggerOptions,
+		trustProxy: publicAddressTrustProxy,
+	});
 	server.setNotFoundHandler(notFound);
 
 	let config: ReturnType<typeof readServerConfig>;
 	let webRoot: string;
+	let publicUrl: string | undefined;
 	try {
 		config = readServerConfig(process.env);
 		webRoot = resolveWebRoot(process.env);
+		publicUrl = parsePublicUrl(process.env.PUBLIC_URL);
 	} catch (error) {
 		server.log.error({ stage: "config" }, (error as Error).message);
 		process.exitCode = 1;
@@ -53,7 +59,7 @@ async function main(): Promise<void> {
 		migrate: () => migrateDatabase(pool),
 		startWorker: () => worker.start(),
 		listen: async () => {
-			await server.register(app, { db, webRoot });
+			await server.register(app, { db, webRoot, publicUrl });
 			await server.listen({ host, port });
 		},
 		closeHttp: async () => {

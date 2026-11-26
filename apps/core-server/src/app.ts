@@ -8,6 +8,8 @@ export interface AppOptions
 	db?: AppDb;
 	/** The built web client; without it the web routes are not registered. */
 	webRoot?: string;
+	/** Overrides the origin of pairing links; otherwise it comes from the request. */
+	publicUrl?: string | undefined;
 }
 
 export const app: FastifyPluginAsync<AppOptions> = async (
