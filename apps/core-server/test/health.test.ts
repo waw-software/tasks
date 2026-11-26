@@ -1,6 +1,7 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import { afterEach, describe, expect, it } from "vitest";
-import { app } from "../src/app.js";
+import { type AppOptions, app } from "../src/app.js";
+import { CAPABILITIES } from "../src/capabilities.js";
 
 describe("GET /health", () => {
 	let server: FastifyInstance;
@@ -9,9 +10,9 @@ describe("GET /health", () => {
 		await server.close();
 	});
 
-	async function getHealth() {
+	async function getHealth(options: AppOptions = {}) {
 		server = Fastify();
-		await server.register(app);
+		await server.register(app, options);
 		return server.inject({ method: "GET", url: "/health" });
 	}
 
@@ -30,5 +31,38 @@ describe("GET /health", () => {
 			"apiVersion",
 			"capabilities",
 		]);
+	});
+
+	it.each([
+		{ name: "an empty list", capabilities: [] },
+		{ name: "a selected list", capabilities: ["connect", "x"] },
+	])(
+		"REQ-010 AC-34 serves the capability list it was given: $name",
+		async ({ capabilities }) => {
+			const res = await getHealth({ capabilities });
+
+			expect(res.json()).toEqual({ apiVersion: 1, capabilities });
+			expect(res.headers["cache-control"]).toBe("no-store");
+		},
+	);
+
+	it("REQ-010 AC-34 serves the capability list it was given: none means the default", async () => {
+		const res = await getHealth();
+
+		expect(res.json()).toEqual({
+			apiVersion: 1,
+			capabilities: [...CAPABILITIES],
+		});
+		expect(res.headers["cache-control"]).toBe("no-store");
+	});
+
+	it("REQ-010 AC-34 serves the capability list it was given: a copy of it", async () => {
+		const capabilities = ["connect"];
+		await getHealth({ capabilities });
+
+		capabilities.push("later");
+		const res = await server.inject({ method: "GET", url: "/health" });
+
+		expect(res.json()).toEqual({ apiVersion: 1, capabilities: ["connect"] });
 	});
 });

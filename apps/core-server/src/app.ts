@@ -13,6 +13,8 @@ export interface AppOptions
 	publicUrl?: string | undefined;
 	/** First-run setup; without it the server behaves as a claimed one. */
 	setup?: SetupService;
+	/** What GET /health lists, in place of CAPABILITIES; an empty list stays empty. */
+	capabilities?: readonly string[] | undefined;
 }
 
 export const app: FastifyPluginAsync<AppOptions> = async (

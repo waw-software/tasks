@@ -27,7 +27,7 @@ export function setupCodeFrom(output: string): string {
 	return setupCode;
 }
 
-/** Fresh DB + spawned server; runs with its origin, code and process; stops and drops in finally. */
+/** Fresh DB + spawned server (options go to spawnServer); runs with its origin, code and process; stops and drops in finally. */
 export async function withSetupServer<T>(
 	run: (s: {
 		origin: string;
@@ -35,12 +35,16 @@ export async function withSetupServer<T>(
 		server: ServerProcess;
 		databaseUrl: string;
 	}) => Promise<T>,
+	options?: { capabilities?: readonly string[] },
 ): Promise<T> {
 	return withDatabase(async (databaseUrl) => {
 		// Without PUBLIC_URL the server derives its address from the request.
-		const server = spawnServer(databaseUrl, undefined, {
-			PUBLIC_URL: undefined,
-		});
+		const server = spawnServer(
+			databaseUrl,
+			undefined,
+			{ PUBLIC_URL: undefined },
+			options,
+		);
 		try {
 			const origin = await server.listening();
 			const setupCode = setupCodeFrom(server.output());

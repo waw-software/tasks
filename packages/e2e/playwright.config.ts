@@ -18,6 +18,7 @@ export default defineConfig({
 		"runtime.spec.ts",
 		"pairing.spec.ts",
 		"setup.spec.ts",
+		"capability-fixture.spec.ts",
 	],
 	retries: 0,
 	workers: 1,
