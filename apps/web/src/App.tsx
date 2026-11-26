@@ -1,5 +1,10 @@
 import type { SetupClaimResponse } from "@waw/api-contract";
 import { useEffect, useState } from "react";
+import { defaultBrowserConnectAdapter } from "./connect/browser.ts";
+import { ConnectFlow } from "./connect/ConnectFlow.tsx";
+import { ConnectView } from "./connect/ConnectView.tsx";
+import { Shell } from "./connect/Shell.tsx";
+import { UpdateServer } from "./connect/UpdateServer.tsx";
 import Gallery from "./Gallery.tsx";
 import { Setup } from "./Setup.tsx";
 
@@ -20,6 +25,11 @@ function useHash() {
 		return () => window.removeEventListener("hashchange", update);
 	}, []);
 	return hash;
+}
+
+function WebApp() {
+	const [adapter] = useState(defaultBrowserConnectAdapter);
+	return <ConnectFlow origin={window.location.origin} adapter={adapter} />;
 }
 
 export default function App() {
@@ -54,9 +64,32 @@ export default function App() {
 	if (galleryEnabled && hash === "#/gallery/overlays/quick-add") {
 		return <Gallery section="overlays-quick-add" />;
 	}
-	return (
-		<main>
-			<h1>WAW Tasks</h1>
-		</main>
-	);
+	if (galleryEnabled && hash === "#/gallery/connect") {
+		return (
+			<ConnectView
+				serverUrl="https://tasks.example.com"
+				pending={false}
+				onSubmit={() => {}}
+			/>
+		);
+	}
+	if (galleryEnabled && hash === "#/gallery/update-server") {
+		return (
+			<UpdateServer
+				health={{ apiVersion: 1, capabilities: [] }}
+				pending={false}
+				onRetry={() => {}}
+				onContinue={() => {}}
+			/>
+		);
+	}
+	if (galleryEnabled && hash === "#/gallery/shell") {
+		return <Shell limited={false} />;
+	}
+	// The Electron build loads from a file and has no server session until its
+	// bridge exists.
+	if (window.location.protocol === "file:") {
+		return <Shell limited={false} />;
+	}
+	return <WebApp />;
 }

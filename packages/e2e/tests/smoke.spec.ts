@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 import { withSetupServer } from "./support/setup.ts";
 
 // The server serves the API and the web client on one origin. This one stays unclaimed.
@@ -54,6 +54,7 @@ test("REQ-001 AC-03 answers 404 for missing assets and unknown API paths", async
 // The shell is behind the setup page until a server is claimed, so these tests run on their own.
 test.describe("on a claimed server", () => {
 	let claimedOrigin: string;
+	let token: string;
 	let release: () => void;
 	let released: Promise<void>;
 
@@ -70,6 +71,9 @@ test.describe("on a claimed server", () => {
 					body: JSON.stringify({ code: setupCode }),
 				});
 				expect(response.status).toBe(201);
+				({ accessToken: token } = (await response.json()) as {
+					accessToken: string;
+				});
 				resolve(origin);
 				await done;
 			});
@@ -81,6 +85,14 @@ test.describe("on a claimed server", () => {
 		release();
 		await released;
 	});
+
+	// The shell needs a session: its cookie goes into the page's own context.
+	async function signIn(page: Page) {
+		const response = await page.request.post(`${claimedOrigin}/session`, {
+			headers: { authorization: `Bearer ${token}`, origin: claimedOrigin },
+		});
+		expect(response.status()).toBe(201);
+	}
 
 	test("REQ-001 AC-01 REQ-010 AC-36 serves the same GET /health once claimed", async ({
 		request,
@@ -96,6 +108,7 @@ test.describe("on a claimed server", () => {
 	test("REQ-001 AC-03 shows the web shell heading on the server origin", async ({
 		page,
 	}) => {
+		await signIn(page);
 		await page.goto(`${claimedOrigin}/`);
 		await expect(
 			page
@@ -122,7 +135,13 @@ test.describe("on a claimed server", () => {
 					});
 				}
 			});
+			await signIn(page);
 			await page.goto(`${claimedOrigin}/`);
+
+			// "Connecting…" comes first; the heading under test is the shell's.
+			await expect(
+				page.getByRole("heading", { level: 1, name: "WAW Tasks" }),
+			).toBeVisible();
 
 			const loaded = await page.evaluate(async (wanted) => {
 				const results: boolean[] = [];

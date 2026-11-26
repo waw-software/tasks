@@ -5,7 +5,7 @@ import {
 	render,
 	screen,
 } from "@testing-library/react";
-import { afterEach, beforeAll, expect, test, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, expect, test, vi } from "vitest";
 import App from "./App.tsx";
 
 // jsdom has no modal dialog methods.
@@ -18,6 +18,23 @@ beforeAll(() => {
 		this.dispatchEvent(new Event("close"));
 	};
 });
+
+const realLocation = window.location;
+
+// jsdom serves the tests over http, where App signs in to its server. This is the
+// same location as the Electron file build reads it; all but the protocol is real.
+function openAsFileBuild() {
+	vi.stubGlobal(
+		"location",
+		new Proxy({} as Location, {
+			get: (_, key) =>
+				key === "protocol" ? "file:" : Reflect.get(realLocation, key),
+			set: (_, key, value) => Reflect.set(realLocation, key, value),
+		}),
+	);
+}
+
+beforeEach(openAsFileBuild);
 
 afterEach(() => {
 	vi.unstubAllGlobals();
@@ -286,4 +303,70 @@ test("REQ-011 AC-39: App: #/gallery/setup shows the revealed sample only in a ga
 	expect(
 		screen.getByRole("img", { name: "QR code for the pairing link" }),
 	).toBeDefined();
+});
+
+test("REQ-007 AC-28 App: /setup wins over the web sign-in", () => {
+	vi.unstubAllGlobals();
+	const fetch = vi.fn();
+	vi.stubGlobal("fetch", fetch);
+	window.history.pushState(null, "", "/setup");
+
+	render(<App />);
+
+	expect(levelOneHeading()).toBe("Set up WAW Tasks");
+	expect(screen.queryByText("Connecting…")).toBeNull();
+	expect(fetch).not.toHaveBeenCalled();
+	window.history.pushState(null, "", "/");
+});
+
+test.each([
+	["#/gallery/connect", "Connect to your server"],
+	["#/gallery/update-server", "Your server needs an update"],
+	["#/gallery/shell", "WAW Tasks"],
+])(
+	"REQ-007 AC-28 REQ-010 AC-35 App: %s renders only in a gallery build",
+	(hash, heading) => {
+		vi.stubEnv("DEV", false);
+		vi.stubEnv("VITE_WAW_GALLERY", undefined);
+		window.location.hash = hash;
+
+		render(<App />);
+		expect(levelOneHeading()).toBe("WAW Tasks");
+		expect(screen.queryByRole("button")).toBeNull();
+		cleanup();
+
+		vi.stubEnv("VITE_WAW_GALLERY", "1");
+
+		render(<App />);
+		expect(levelOneHeading()).toBe(heading);
+	},
+);
+
+test("REQ-001 AC-03 App: a file: location renders the shell without calling fetch", () => {
+	const fetch = vi.fn();
+	vi.stubGlobal("fetch", fetch);
+
+	render(<App />);
+
+	expect(levelOneHeading()).toBe("WAW Tasks");
+	expect(screen.queryByRole("button")).toBeNull();
+	expect(fetch).not.toHaveBeenCalled();
+});
+
+test("REQ-007 AC-28 App: a web location signs in against its own origin", async () => {
+	vi.unstubAllGlobals();
+	const requested: string[] = [];
+	vi.stubGlobal("fetch", async (url: string) => {
+		requested.push(url);
+		return { status: 401, json: async () => ({}) };
+	});
+
+	render(<App />);
+
+	await screen.findByRole("heading", {
+		level: 1,
+		name: "Connect to your server",
+	});
+	expect(screen.getByText(realLocation.origin)).toBeDefined();
+	expect(requested).toEqual([`${realLocation.origin}/tokens/current`]);
 });
