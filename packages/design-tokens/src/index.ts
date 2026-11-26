@@ -151,6 +151,12 @@ export const theme = {
 		bannerInline: 14,
 		bannerGap: 8,
 		bannerCopyGap: 2,
+		segmentGap: 8,
+		swatchGap: 10,
+		optionGap: 12,
+		optionInline: 14,
+		swatchLabelGap: 10,
+		segmentIconGap: 4,
 	},
 	size: {
 		touchTarget: 44,
@@ -172,6 +178,10 @@ export const theme = {
 		desktopInput: 50,
 		controlBorder: 1,
 		focusRing: 2,
+		segmentMobile: 72,
+		optionRow: 50,
+		radioDot: 12,
+		pickerMark: 16,
 	},
 } as const satisfies Readonly<Record<string, unknown>> & {
 	color: Readonly<Record<ColorKey, string>>;

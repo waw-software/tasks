@@ -25,6 +25,9 @@ export default function App() {
 	if (galleryEnabled && hash === "#/gallery/controls") {
 		return <Gallery section="controls" />;
 	}
+	if (galleryEnabled && hash === "#/gallery/pickers") {
+		return <Gallery section="pickers" />;
+	}
 	return (
 		<main>
 			<h1>WAW Tasks</h1>

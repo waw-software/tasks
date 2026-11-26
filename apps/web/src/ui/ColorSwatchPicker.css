@@ -1,0 +1,26 @@
+/* The input lies invisibly over its circle, which is the visible face. */
+@media (hover: hover) and (pointer: fine) {
+	.waw-swatch input:enabled:hover + [data-part="face"] {
+		outline: var(--waw-ring-width) solid var(--waw-hover);
+		outline-offset: var(--waw-focus-offset);
+	}
+}
+
+/* After hover, so that pressed wins. */
+.waw-swatch input:enabled:active + [data-part="face"] {
+	outline: var(--waw-ring-width) solid var(--waw-ring);
+	outline-offset: var(--waw-focus-offset);
+}
+
+/* A separator in the page colour, then the ring around it. */
+.waw-swatch input:enabled:checked + [data-part="face"] {
+	box-shadow:
+		0 0 0 var(--waw-ring-width) var(--waw-ring-gap),
+		0 0 0 calc(2 * var(--waw-ring-width)) var(--waw-ring);
+}
+
+/* Last, so that focus wins over hover and press. */
+.waw-swatch input:enabled:focus-visible + [data-part="face"] {
+	outline: var(--waw-focus-width) solid var(--waw-focus);
+	outline-offset: var(--waw-focus-offset);
+}

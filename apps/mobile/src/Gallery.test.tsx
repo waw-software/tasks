@@ -254,4 +254,107 @@ describe("Gallery", () => {
 			screen.getByText("Selected: How to deploy with Docker"),
 		).toBeOnTheScreen();
 	});
+
+	it("Pickers calls onOpenPickers", async () => {
+		const onOpenPickers = jest.fn();
+		await render(<Gallery onBack={jest.fn()} onOpenPickers={onOpenPickers} />);
+
+		await fireEvent.press(screen.getByRole("button", { name: "Pickers" }));
+
+		expect(onOpenPickers).toHaveBeenCalledTimes(1);
+	});
+
+	it("Pickers starts with P1, @money, Red, Green, monthly and two reminders", async () => {
+		await render(<Gallery section="pickers" onBack={jest.fn()} />);
+
+		expect(screen.getByRole("header", { name: "Pickers" })).toBeOnTheScreen();
+		const checkedIn = (group: string, role: "radio" | "checkbox") =>
+			within(screen.getByLabelText(group))
+				.getAllByRole(role)
+				.filter((item) => item.props.accessibilityState.checked)
+				.map((item) => item.props.accessibilityLabel);
+		expect(checkedIn("Priority", "radio")).toEqual(["P1"]);
+		expect(checkedIn("Labels", "checkbox")).toEqual(["@money, 6 tasks"]);
+		expect(checkedIn("Color", "radio")).toEqual(["Red"]);
+		expect(checkedIn("Label color", "radio")).toEqual(["Green"]);
+		expect(checkedIn("Repeat", "radio")).toEqual(["Every month on the 1st"]);
+		expect(checkedIn("Reminders", "checkbox")).toEqual([
+			"At the time of the task",
+			"1 day before",
+		]);
+		expect(screen.getByText("Color · Red")).toBeOnTheScreen();
+		expect(screen.getByText("Label color · Green")).toBeOnTheScreen();
+		expect(
+			screen.getByText("P1 tasks rise to the top of Today. P4 is the default."),
+		).toBeOnTheScreen();
+		expect(
+			screen.getByText(
+				"Next one appears after you complete this one: Tue 1 Dec, 09:00.",
+			),
+		).toBeOnTheScreen();
+		expect(screen.getByText("Home")).toBeOnTheScreen();
+		expect(screen.getByText("5 tasks")).toBeOnTheScreen();
+	});
+
+	it("Pickers updates the previews", async () => {
+		await render(<Gallery section="pickers" onBack={jest.fn()} />);
+		const marker = (color: string) =>
+			screen.queryByTestId(`marker-${color}`, { includeHiddenElements: true });
+		expect(marker("red")).not.toBeNull();
+
+		await fireEvent.press(screen.getByRole("radio", { name: "P2" }));
+
+		expect(
+			screen.getByRole("radio", { name: "P2" }).props.accessibilityState,
+		).toMatchObject({ checked: true });
+
+		await fireEvent.press(
+			within(screen.getByLabelText("Color")).getByRole("radio", {
+				name: "Blue",
+			}),
+		);
+
+		expect(marker("blue")).not.toBeNull();
+		expect(marker("red")).toBeNull();
+
+		await fireEvent.press(
+			screen.getByRole("checkbox", { name: "@calls, 3 tasks" }),
+		);
+
+		for (const name of ["@money, 6 tasks", "@calls, 3 tasks"]) {
+			expect(
+				screen.getByRole("checkbox", { name }).props.accessibilityState,
+			).toMatchObject({ checked: true });
+		}
+
+		expect(screen.getByText("Selected: none")).toBeOnTheScreen();
+
+		await fireEvent.press(screen.getByRole("button", { name: "New label" }));
+
+		expect(screen.getByText("Selected: New label")).toBeOnTheScreen();
+	});
+
+	it("REQ-003 AC-14: a specific-time reminder is added once and kept with the others", async () => {
+		await render(<Gallery section="pickers" onBack={jest.fn()} />);
+		const add = () =>
+			fireEvent.press(
+				screen.getByRole("button", { name: "At a specific time" }),
+			);
+
+		await add();
+		await add();
+
+		expect(screen.getAllByRole("checkbox", { name: "At 10:00" })).toHaveLength(
+			1,
+		);
+		for (const name of [
+			"At 10:00",
+			"At the time of the task",
+			"1 day before",
+		]) {
+			expect(
+				screen.getByRole("checkbox", { name }).props.accessibilityState,
+			).toMatchObject({ checked: true });
+		}
+	});
 });

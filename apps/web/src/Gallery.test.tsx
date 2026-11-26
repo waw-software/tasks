@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	within,
+} from "@testing-library/react";
 import { afterEach, expect, test } from "vitest";
 import Gallery from "./Gallery.tsx";
 
@@ -222,4 +228,77 @@ test("Controls buttons report their selection and the disabled one does not", ()
 
 	press("How to deploy with Docker");
 	expect(screen.getByText("Selected: How to deploy with Docker")).toBeDefined();
+});
+
+function checkedNames(role: "radio" | "checkbox") {
+	return screen
+		.getAllByRole<HTMLInputElement>(role)
+		.filter((input) => input.checked)
+		.map(
+			(input) =>
+				input.getAttribute("aria-label") ?? input.closest("label")?.textContent,
+		);
+}
+
+function group(name: string) {
+	return screen.getByRole("group", { name });
+}
+
+test("Pickers starts with P1, @money, Red, Green, monthly and two reminders", () => {
+	render(<Gallery section="pickers" />);
+
+	expect(checkedNames("radio")).toEqual([
+		"P1",
+		"Red",
+		"Green",
+		"Every month on the 1st",
+	]);
+	expect(checkedNames("checkbox")).toEqual([
+		"@money6 tasks",
+		"At the time of the task",
+		"1 day before",
+	]);
+	expect(group("Color").querySelector("legend")?.textContent).toBe(
+		"Color · Red",
+	);
+	expect(group("Label color").querySelector("legend")?.textContent).toBe(
+		"Label color · Green",
+	);
+});
+
+test("Pickers updates the previews", () => {
+	render(<Gallery section="pickers" />);
+	const preview = () =>
+		screen
+			.getByRole("region", { name: "Project colour" })
+			.querySelector<HTMLElement>("[data-color]")?.dataset.color;
+	expect(preview()).toBe("red");
+
+	fireEvent.click(screen.getByRole("radio", { name: "P2" }));
+	fireEvent.click(within(group("Color")).getByRole("radio", { name: "Blue" }));
+	fireEvent.click(checkbox("@calls 3 tasks"));
+
+	expect(
+		screen.getByRole<HTMLInputElement>("radio", { name: "P2" }).checked,
+	).toBe(true);
+	expect(preview()).toBe("blue");
+	expect(checkbox("@money 6 tasks").checked).toBe(true);
+	expect(checkbox("@calls 3 tasks").checked).toBe(true);
+
+	expect(screen.queryByText("Selected: New label")).toBeNull();
+	press("New label");
+	expect(screen.getByText("Selected: New label")).toBeDefined();
+});
+
+test("REQ-003 AC-14: a specific-time reminder is added once and kept with the others", () => {
+	render(<Gallery section="pickers" />);
+	expect(screen.queryByRole("checkbox", { name: "At 10:00" })).toBeNull();
+
+	press("At a specific time");
+	press("At a specific time");
+
+	expect(screen.getAllByRole("checkbox", { name: "At 10:00" })).toHaveLength(1);
+	expect(checkbox("At 10:00").checked).toBe(true);
+	expect(checkbox("At the time of the task").checked).toBe(true);
+	expect(checkbox("1 day before").checked).toBe(true);
 });

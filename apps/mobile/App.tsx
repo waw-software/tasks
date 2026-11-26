@@ -21,12 +21,15 @@ export function galleryRoute(url: string | null): GallerySection | null {
 	if (path.endsWith("/--/gallery/rows")) {
 		return "rows";
 	}
-	return path.endsWith("/--/gallery/controls") ? "controls" : null;
+	if (path.endsWith("/--/gallery/controls")) {
+		return "controls";
+	}
+	return path.endsWith("/--/gallery/pickers") ? "pickers" : null;
 }
 
 export default function App() {
 	const [screen, setScreen] = useState<
-		"shell" | "gallery" | "rows" | "controls"
+		"shell" | "gallery" | "rows" | "controls" | "pickers"
 	>("shell");
 	const [fontsLoaded, fontError] = useAppFonts();
 
@@ -67,6 +70,7 @@ export default function App() {
 					onBack={() => setScreen(screen === "gallery" ? "shell" : "gallery")}
 					onOpenRows={() => setScreen("rows")}
 					onOpenControls={() => setScreen("controls")}
+					onOpenPickers={() => setScreen("pickers")}
 				/>
 				<StatusBar style="auto" />
 			</>

@@ -1,0 +1,21 @@
+/* The input lies invisibly over its card, which is the visible face. A selected
+   or disabled card sets its fill inline, so these state rules cannot change it. */
+.waw-segment [data-part="face"] {
+	background-color: var(--waw-bg);
+}
+
+@media (hover: hover) and (pointer: fine) {
+	.waw-segment input:enabled:hover + [data-part="face"] {
+		background-color: var(--waw-bg-hover);
+	}
+}
+
+/* After hover, so that pressed wins. */
+.waw-segment input:enabled:active + [data-part="face"] {
+	background-color: var(--waw-bg-active);
+}
+
+.waw-segment input:enabled:focus-visible + [data-part="face"] {
+	outline: var(--waw-focus-width) solid var(--waw-focus);
+	outline-offset: var(--waw-focus-offset);
+}
