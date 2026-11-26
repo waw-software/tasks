@@ -56,7 +56,16 @@ async function main(): Promise<void> {
 			await server.register(app, { db, webRoot });
 			await server.listen({ host, port });
 		},
-		closeHttp: () => server.close(),
+		closeHttp: async () => {
+			// A client that stops reading keeps its connection busy and would hold the
+			// shutdown forever, so open connections are cut after a grace period.
+			const cut = setTimeout(() => server.server.closeAllConnections(), 5_000);
+			try {
+				await server.close();
+			} finally {
+				clearTimeout(cut);
+			}
+		},
 		stopWorker: () => worker.stop(),
 		closeDatabase: () => pool.end(),
 	});
