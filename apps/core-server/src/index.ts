@@ -1,10 +1,13 @@
 import Fastify from "fastify";
 import { app } from "./app.js";
+import { createDb } from "./auth/device-store.js";
 import { readServerConfig, redactDatabaseUrl } from "./db/config.js";
 import { migrateDatabase, openDatabase } from "./db/database.js";
 
 async function main(): Promise<void> {
-	const server = Fastify({ logger: true });
+	const server = Fastify({
+		logger: { redact: ["req.headers.authorization"] },
+	});
 
 	let config: ReturnType<typeof readServerConfig>;
 	try {
@@ -34,6 +37,8 @@ async function main(): Promise<void> {
 		return;
 	}
 
+	const db = createDb(pool);
+
 	let stopping = false;
 	const shutdown = async (): Promise<void> => {
 		if (stopping) return;
@@ -48,7 +53,7 @@ async function main(): Promise<void> {
 	};
 
 	try {
-		await server.register(app);
+		await server.register(app, { db });
 		process.on("SIGINT", shutdown);
 		process.on("SIGTERM", shutdown);
 		await server.listen({ host, port });
