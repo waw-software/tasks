@@ -21,12 +21,19 @@ const tokens: FastifyPluginAsync<AppOptions> = async (
 	if (!db) return;
 
 	const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
-	const onRequest = [noStore, requireDevice(db)];
+	const authenticate = requireDevice(db);
+	// A write authenticates after its body has arrived, so a slow request cannot
+	// outlive the revocation of its token.
+	const write = {
+		onRequest: noStore,
+		preHandler: authenticate,
+		bodyLimit: 1024,
+	};
 
 	server.get(
 		"/tokens/current",
 		{
-			onRequest,
+			onRequest: [noStore, authenticate],
 			schema: {
 				response: { 200: DeviceIdentitySchema, 401: UnauthorizedSchema },
 			},
@@ -38,7 +45,7 @@ const tokens: FastifyPluginAsync<AppOptions> = async (
 	server.post(
 		"/tokens",
 		{
-			onRequest,
+			...write,
 			schema: {
 				response: { 201: DeviceCredentialSchema, 401: UnauthorizedSchema },
 			},
@@ -52,7 +59,7 @@ const tokens: FastifyPluginAsync<AppOptions> = async (
 	server.delete(
 		"/tokens/:id",
 		{
-			onRequest,
+			...write,
 			schema: {
 				params: DeviceTokenParamsSchema,
 				response: { 204: { type: "null" }, 401: UnauthorizedSchema },

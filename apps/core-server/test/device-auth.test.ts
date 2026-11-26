@@ -1,6 +1,7 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import { afterEach, describe, expect, it } from "vitest";
 import { app } from "../src/app.js";
+import { loggerOptions, notFound } from "../src/auth/device-auth.js";
 import {
 	type AppDb,
 	hashDeviceToken,
@@ -125,6 +126,128 @@ describe("device auth", () => {
 			expect(res.body).not.toContain(secret);
 			expect(log).not.toContain(secret);
 		}
+	});
+
+	it("request logs name the route template, never the URL, query or headers", async () => {
+		let log = "";
+		server = Fastify({
+			logger: {
+				...loggerOptions,
+				stream: {
+					write: (line: string) => {
+						log += line;
+					},
+				},
+			},
+		});
+		server.setNotFoundHandler(notFound);
+		await server.register(app, { db: fakeDb().db });
+
+		const matched = await server.inject({
+			method: "DELETE",
+			url: `/tokens/${token}?token=${token}`,
+			headers: { "x-pasted": token },
+		});
+		const unmatched = await server.inject({
+			method: "GET",
+			url: `/nope/${token}?token=${token}`,
+		});
+
+		expect(matched.statusCode).toBe(400);
+		expect(unmatched.statusCode).toBe(404);
+		const requests = log
+			.trim()
+			.split("\n")
+			.map((line) => JSON.parse(line).req)
+			.filter(Boolean);
+		expect(requests).toEqual([
+			{ method: "DELETE", route: "/tokens/:id", remoteAddress: "127.0.0.1" },
+			{ method: "GET", route: "(no route)", remoteAddress: "127.0.0.1" },
+		]);
+		expect(log).not.toContain(token);
+	});
+
+	it("DELETE /tokens/:id rejects a urn:uuid: id with 400", async () => {
+		const target = await start(fakeDb().db);
+
+		const res = await target.inject({
+			method: "DELETE",
+			url: `/tokens/urn:uuid:${deviceId}`,
+			headers: { authorization: `Bearer ${token}` },
+		});
+
+		expect(res.statusCode).toBe(400);
+	});
+
+	it("POST /tokens with a body is still authenticated", async () => {
+		const target = await start(fakeDb().db);
+
+		const res = await target.inject({
+			method: "POST",
+			url: "/tokens",
+			payload: { any: "thing" },
+		});
+
+		expect(res.statusCode).toBe(401);
+		expect(res.json()).toEqual({ error: "unauthorized" });
+		expect(res.headers["www-authenticate"]).toBe("Bearer");
+		expect(res.headers["cache-control"]).toBe("no-store");
+	});
+
+	it.each([
+		["POST", "/tokens"],
+		["DELETE", `/tokens/${deviceId}`],
+	] as const)(
+		"%s %s rejects a token revoked while the body is being read",
+		async (method, url) => {
+			let revoked = false;
+			let writes = 0;
+			const query = {
+				from: () => query,
+				where: () => query,
+				limit: async () => (revoked ? [] : [{ id: deviceId }]),
+			};
+			const write = async () => {
+				writes += 1;
+			};
+			const db = {
+				select: () => query,
+				insert: () => ({ values: write }),
+				update: () => ({ set: () => ({ where: write }) }),
+			} as unknown as AppDb;
+			server = Fastify();
+			// Runs between the request headers and the parsed body.
+			server.addHook("preParsing", async () => {
+				revoked = true;
+			});
+			await server.register(app, { db });
+
+			const res = await server.inject({
+				method,
+				url,
+				headers: { authorization: `Bearer ${token}` },
+				payload: {},
+			});
+
+			expect(res.statusCode).toBe(401);
+			expect(writes).toBe(0);
+		},
+	);
+
+	it.each([
+		["POST", "/tokens"],
+		["DELETE", `/tokens/${deviceId}`],
+	] as const)("%s %s limits the body to 1024 bytes", async (method, url) => {
+		const target = await start(fakeDb().db);
+
+		const res = await target.inject({
+			method,
+			url,
+			headers: { authorization: `Bearer ${token}` },
+			payload: { filler: "a".repeat(1024) },
+		});
+
+		expect(res.statusCode).toBe(413);
 	});
 
 	it("hashDeviceToken is SHA-256 hex and issueDeviceToken returns a token matching the contract pattern", async () => {

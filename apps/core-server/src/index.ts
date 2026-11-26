@@ -1,13 +1,13 @@
 import Fastify from "fastify";
 import { app } from "./app.js";
+import { loggerOptions, notFound } from "./auth/device-auth.js";
 import { createDb } from "./auth/device-store.js";
 import { readServerConfig, redactDatabaseUrl } from "./db/config.js";
 import { migrateDatabase, openDatabase } from "./db/database.js";
 
 async function main(): Promise<void> {
-	const server = Fastify({
-		logger: { redact: ["req.headers.authorization"] },
-	});
+	const server = Fastify({ logger: loggerOptions });
+	server.setNotFoundHandler(notFound);
 
 	let config: ReturnType<typeof readServerConfig>;
 	try {

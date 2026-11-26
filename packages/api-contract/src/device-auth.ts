@@ -1,6 +1,11 @@
 import { type Static, Type } from "typebox";
 
-export const DeviceTokenIdSchema = Type.String({ format: "uuid" });
+// The pattern excludes the urn:uuid: form that the uuid format also accepts.
+export const DeviceTokenIdSchema = Type.String({
+	format: "uuid",
+	pattern:
+		"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+});
 
 export const DeviceTokenSchema = Type.String({
 	pattern: "^waw_dev_[A-Za-z0-9_-]{43}$",
