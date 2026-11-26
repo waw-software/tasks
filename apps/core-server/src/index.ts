@@ -1,17 +1,22 @@
+import { createPgBossWorker } from "@waw/core-worker";
 import Fastify from "fastify";
 import { app } from "./app.js";
 import { loggerOptions, notFound } from "./auth/device-auth.js";
 import { createDb } from "./auth/device-store.js";
 import { readServerConfig, redactDatabaseUrl } from "./db/config.js";
 import { migrateDatabase, openDatabase } from "./db/database.js";
+import { createRuntime } from "./runtime.js";
+import { resolveWebRoot } from "./web-root.js";
 
 async function main(): Promise<void> {
 	const server = Fastify({ logger: loggerOptions });
 	server.setNotFoundHandler(notFound);
 
 	let config: ReturnType<typeof readServerConfig>;
+	let webRoot: string;
 	try {
 		config = readServerConfig(process.env);
+		webRoot = resolveWebRoot(process.env);
 	} catch (error) {
 		server.log.error({ stage: "config" }, (error as Error).message);
 		process.exitCode = 1;
@@ -20,46 +25,48 @@ async function main(): Promise<void> {
 	const { databaseUrl, host, port } = config;
 
 	// Only the redacted message is logged: the error object may carry connection details.
+	const redact = (message: unknown): string =>
+		redactDatabaseUrl(String(message), databaseUrl);
 	const logFailure = (stage: string, error: unknown): void => {
 		const message = error instanceof Error ? error.message : String(error);
-		server.log.error({ stage }, redactDatabaseUrl(message, databaseUrl));
+		server.log.error({ stage }, redact(message));
 	};
 
 	const pool = openDatabase(databaseUrl);
 	pool.on("error", (error) => logFailure("database", error));
-
-	try {
-		await migrateDatabase(pool);
-	} catch (error) {
-		logFailure("migrate", error);
-		await pool.end().catch(() => {});
-		process.exitCode = 1;
-		return;
-	}
-
 	const db = createDb(pool);
+	const worker = createPgBossWorker(databaseUrl, {
+		info: (message: unknown) => server.log.info(redact(message)),
+		error: (message: unknown) => server.log.error(redact(message)),
+	});
 
-	let stopping = false;
 	const shutdown = async (): Promise<void> => {
-		if (stopping) return;
-		stopping = true;
 		try {
-			await server.close();
-			await pool.end();
+			await runtime.stop();
 		} catch (error) {
 			logFailure("shutdown", error);
 			process.exitCode = 1;
 		}
 	};
 
+	const runtime = createRuntime({
+		migrate: () => migrateDatabase(pool),
+		startWorker: () => worker.start(),
+		listen: async () => {
+			await server.register(app, { db, webRoot });
+			process.on("SIGINT", shutdown);
+			process.on("SIGTERM", shutdown);
+			await server.listen({ host, port });
+		},
+		closeHttp: () => server.close(),
+		stopWorker: () => worker.stop(),
+		closeDatabase: () => pool.end(),
+	});
+
 	try {
-		await server.register(app, { db });
-		process.on("SIGINT", shutdown);
-		process.on("SIGTERM", shutdown);
-		await server.listen({ host, port });
+		await runtime.start();
 	} catch (error) {
-		logFailure("listen", error);
-		await pool.end().catch(() => {});
+		logFailure("startup", error);
 		process.exitCode = 1;
 	}
 }
