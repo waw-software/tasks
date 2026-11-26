@@ -42,6 +42,7 @@ export function resolvePublicUrl(
 	return `${protocol}://${host}`;
 }
 
+/** Always https (ADR 0002): over plain HTTP an on-path attacker could read the token. */
 export function makePairingLink(origin: string, token: string): string {
-	return `${origin}/pair#token=${token}`;
+	return `https://${new URL(origin).host}/pair#token=${token}`;
 }

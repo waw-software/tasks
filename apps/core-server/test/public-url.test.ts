@@ -163,4 +163,19 @@ describe("REQ-011 AC-39 the public origin of pairing links", () => {
 		expect(url.search).toBe("");
 		expect(url.hash).toBe(`#token=${token}`);
 	});
+
+	it("makePairingLink uses https for an http origin and keeps host and port", () => {
+		const token = `waw_pair_${"a".repeat(43)}`;
+
+		for (const [origin, expected] of [
+			["http://127.0.0.1:3000", "https://127.0.0.1:3000"],
+			["http://[::1]:3000", "https://[::1]:3000"],
+			["http://tasks.example.com", "https://tasks.example.com"],
+			["https://tasks.example.com:8443", "https://tasks.example.com:8443"],
+		] as const) {
+			expect(makePairingLink(origin, token), origin).toBe(
+				`${expected}/pair#token=${token}`,
+			);
+		}
+	});
 });

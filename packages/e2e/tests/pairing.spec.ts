@@ -175,25 +175,45 @@ test("REQ-011 AC-39 issues a one-hour pairing link from the request origin", asy
 		expect(expiresAt).toBeGreaterThanOrEqual(before + HOUR_MS - MINUTE_MS);
 		expect(expiresAt).toBeLessThanOrEqual(after + HOUR_MS + MINUTE_MS);
 
+		// Plain HTTP with no forwarded protocol still gives an HTTPS link.
+		const plain = await postPairing(baseUrl, {
+			host: origin.host,
+			...bearer(device.token),
+		});
+		expect(plain.status, plain.body).toBe(201);
+		expect((JSON.parse(plain.body) as Pairing).pairingLink).toMatch(
+			/^https:\/\/tasks\.example\.test\/pair#token=waw_pair_[A-Za-z0-9_-]{43}$/,
+		);
+
 		const anonymous = await postPairing(baseUrl, origin);
 		expect(anonymous.status).toBe(401);
 		expect(JSON.parse(anonymous.body)).toEqual({ error: "unauthorized" });
 
 		const second = await issuePairing(baseUrl, device);
 		expect(pairingToken(second)).not.toBe(pairingToken(first));
+
+		// REQ-010 AC-36: pairing leaves /health as it was.
+		const health = await fetch(`${baseUrl}/health`);
+		expect(health.status).toBe(200);
+		expect(await health.json()).toEqual({ apiVersion: 1, capabilities: [] });
 	});
 });
 
 test("REQ-011 AC-39 uses PUBLIC_URL when it is set", async () => {
-	await withServer(async (baseUrl, databaseUrl) => {
-		const device = await issueWithCli(databaseUrl);
+	for (const publicUrl of [
+		"https://tasks.example.com",
+		"http://tasks.example.com",
+	]) {
+		await withServer(async (baseUrl, databaseUrl) => {
+			const device = await issueWithCli(databaseUrl);
 
-		const { pairingLink } = await issuePairing(baseUrl, device);
+			const { pairingLink } = await issuePairing(baseUrl, device);
 
-		expect(pairingLink).toMatch(
-			/^https:\/\/tasks\.example\.com\/pair#token=waw_pair_[A-Za-z0-9_-]{43}$/,
-		);
-	}, "https://tasks.example.com");
+			expect(pairingLink, publicUrl).toMatch(
+				/^https:\/\/tasks\.example\.com\/pair#token=waw_pair_[A-Za-z0-9_-]{43}$/,
+			);
+		}, publicUrl);
+	}
 });
 
 test("REQ-011 AC-39 redeems a pairing token exactly once for a working device token", async () => {
@@ -280,14 +300,5 @@ test("fails startup on an invalid PUBLIC_URL", async () => {
 		} finally {
 			await server.stop();
 		}
-	});
-});
-
-test("REQ-010 AC-36 keeps /health unchanged", async () => {
-	await withServer(async (baseUrl) => {
-		const response = await fetch(`${baseUrl}/health`);
-
-		expect(response.status).toBe(200);
-		expect(await response.json()).toEqual({ apiVersion: 1, capabilities: [] });
 	});
 });
