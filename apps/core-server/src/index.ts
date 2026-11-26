@@ -1,9 +1,62 @@
 import Fastify from "fastify";
 import { app } from "./app.js";
+import { readServerConfig, redactDatabaseUrl } from "./db/config.js";
+import { migrateDatabase, openDatabase } from "./db/database.js";
 
-const server = Fastify({ logger: true });
-await server.register(app);
-await server.listen({
-	host: process.env.HOST ?? "127.0.0.1",
-	port: Number(process.env.PORT ?? 3000),
-});
+async function main(): Promise<void> {
+	const server = Fastify({ logger: true });
+
+	let config: ReturnType<typeof readServerConfig>;
+	try {
+		config = readServerConfig(process.env);
+	} catch (error) {
+		server.log.error({ stage: "config" }, (error as Error).message);
+		process.exitCode = 1;
+		return;
+	}
+	const { databaseUrl, host, port } = config;
+
+	// Only the redacted message is logged: the error object may carry connection details.
+	const logFailure = (stage: string, error: unknown): void => {
+		const message = error instanceof Error ? error.message : String(error);
+		server.log.error({ stage }, redactDatabaseUrl(message, databaseUrl));
+	};
+
+	const pool = openDatabase(databaseUrl);
+	pool.on("error", (error) => logFailure("database", error));
+
+	try {
+		await migrateDatabase(pool);
+	} catch (error) {
+		logFailure("migrate", error);
+		await pool.end().catch(() => {});
+		process.exitCode = 1;
+		return;
+	}
+
+	let stopping = false;
+	const shutdown = async (): Promise<void> => {
+		if (stopping) return;
+		stopping = true;
+		try {
+			await server.close();
+			await pool.end();
+		} catch (error) {
+			logFailure("shutdown", error);
+			process.exitCode = 1;
+		}
+	};
+
+	try {
+		await server.register(app);
+		process.on("SIGINT", shutdown);
+		process.on("SIGTERM", shutdown);
+		await server.listen({ host, port });
+	} catch (error) {
+		logFailure("listen", error);
+		await pool.end().catch(() => {});
+		process.exitCode = 1;
+	}
+}
+
+await main();
