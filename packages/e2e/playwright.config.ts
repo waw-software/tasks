@@ -3,9 +3,15 @@ import { defineConfig, devices } from "@playwright/test";
 
 const root = fileURLToPath(new URL("../..", import.meta.url));
 
+if (!process.env.DATABASE_URL) {
+	throw new Error(
+		"DATABASE_URL must point to a disposable PostgreSQL database for the e2e tests",
+	);
+}
+
 export default defineConfig({
 	testDir: "tests",
-	testMatch: "smoke.spec.ts",
+	testMatch: ["smoke.spec.ts", "migrations.spec.ts"],
 	retries: 0,
 	workers: 1,
 	forbidOnly: true,
