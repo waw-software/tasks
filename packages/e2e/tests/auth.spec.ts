@@ -160,12 +160,32 @@ test("issues and revokes device tokens independently over HTTP and the CLI", asy
 		);
 		await expectAuthenticated(baseUrl, first);
 
+		const third = await issueWithCli(databaseUrl);
+		await expectAuthenticated(baseUrl, first);
+		await expectAuthenticated(baseUrl, third);
+
 		await revokeWithCli(databaseUrl, first.id);
 		await expectUnauthorized(
 			await fetch(`${baseUrl}/tokens/current`, {
 				headers: bearer(first.token),
 			}),
 		);
+		await expectAuthenticated(baseUrl, third);
+
+		const client = new Client({ connectionString: databaseUrl });
+		await client.connect();
+		try {
+			const { rows } = await client.query<{ id: string; revoked: boolean }>(
+				"SELECT id, revoked_at IS NOT NULL AS revoked FROM public.device_tokens WHERE id = ANY($1)",
+				[[first.id, third.id]],
+			);
+			expect(
+				Object.fromEntries(rows.map((row) => [row.id, row.revoked])),
+			).toEqual({ [first.id]: true, [third.id]: false });
+		} finally {
+			await client.end();
+		}
+
 		// An unknown id is not an error.
 		await revokeWithCli(databaseUrl, randomUUID());
 	});
@@ -185,11 +205,50 @@ test("rejects missing, malformed, unknown and revoked tokens with a Bearer chall
 			bearer(unknown),
 			bearer(revoked.token),
 		];
-		for (const headers of rejected) {
-			await expectUnauthorized(
-				await fetch(`${baseUrl}/tokens/current`, { headers }),
-			);
+		const routes = [
+			["GET", "/tokens/current"],
+			["POST", "/tokens"],
+			["DELETE", `/tokens/${randomUUID()}`],
+		] as const;
+		for (const [method, path] of routes) {
+			for (const headers of rejected) {
+				await expectUnauthorized(
+					await fetch(`${baseUrl}${path}`, { method, headers }),
+				);
+			}
 		}
+	});
+});
+
+test("keeps tokens out of the server log when one is sent in the path or the query", async () => {
+	await withDatabase(async (databaseUrl) => {
+		const server = spawnServer(databaseUrl);
+		let token = "";
+		try {
+			const baseUrl = await server.listening();
+			const credential = await issueWithCli(databaseUrl);
+			token = credential.token;
+
+			await expectUnauthorized(
+				await fetch(`${baseUrl}/tokens/current?token=${token}`),
+			);
+			// Write routes validate params before auth, and a token is not a uuid.
+			const deleted = await fetch(`${baseUrl}/tokens/${token}`, {
+				method: "DELETE",
+			});
+			expect(deleted.status).toBe(400);
+			await expectAuthenticated(baseUrl, credential);
+		} finally {
+			await server.stop();
+		}
+
+		// The output is complete once stopped. The requests were logged at all.
+		const output = server.output();
+		expect(output).toContain("request completed");
+		expect(output).not.toContain(token);
+		expect(output).not.toContain(
+			createHash("sha256").update(token).digest("hex"),
+		);
 	});
 });
 
