@@ -7,6 +7,7 @@ import {
 	type ServerProcess,
 	spawnServer,
 	withDatabase,
+	withRole,
 } from "./support/server.ts";
 
 const MIGRATION_LOCK_KEY = 72_026_113; // apps/core-server/src/db/database.ts
@@ -63,7 +64,8 @@ async function tcpConnect(port: number): Promise<string | undefined> {
 
 async function expectFailedStart(server: ServerProcess): Promise<void> {
 	const code = await server.exited();
-	expect(code, server.output()).not.toBe(0);
+	// null means a signal killed the child: that is not the server failing its start.
+	expect(typeof code === "number" && code !== 0, server.output()).toBe(true);
 	expect(server.output()).not.toContain("Server listening");
 }
 
@@ -153,17 +155,29 @@ test("REQ-011 AC-38 exits non-zero without listening when the database is unreac
 });
 
 test("REQ-011 AC-38 exits non-zero without listening when a migration fails", async () => {
-	await withDatabase(async (url) => {
-		// The real migration creates this table, so it fails on the one already there.
-		await withClient(url, (client) =>
-			client.query("CREATE TABLE public.device_tokens (x int)"),
-		);
-		const server = spawnServer(url);
-		try {
-			await expectFailedStart(server);
-			expect(server.output()).not.toContain(url);
-		} finally {
-			await server.stop();
-		}
+	// The role outlives the database it owns, and its password matches nothing else in the output.
+	await withRole(async (role) => {
+		await withDatabase(async (adminUrl) => {
+			const url = new URL(adminUrl);
+			await withClient(adminUrl, (client) =>
+				client.query(
+					`ALTER DATABASE ${url.pathname.slice(1)} OWNER TO ${role.name}`,
+				),
+			);
+			url.username = role.name;
+			url.password = role.password;
+			// The real migration creates this table, so it fails on the one already there.
+			await withClient(url.href, (client) =>
+				client.query("CREATE TABLE public.device_tokens (x int)"),
+			);
+			const server = spawnServer(url.href);
+			try {
+				await expectFailedStart(server);
+				expect(server.output()).not.toContain(role.password);
+				expect(server.output()).not.toContain(url.href);
+			} finally {
+				await server.stop();
+			}
+		});
 	});
 });

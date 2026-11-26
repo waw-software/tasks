@@ -9,30 +9,61 @@ const root = fileURLToPath(new URL("../../../..", import.meta.url));
 
 const LISTEN_LINE = /"msg":"Server listening at (http:\/\/127\.0\.0\.1:\d+)"/;
 
-/** Creates database waw_e2e_<12 hex>, runs `run` with its URL, then drops it (WITH (FORCE)). Admin URL: process.env.DATABASE_URL. */
-export async function withDatabase<T>(
-	run: (url: string) => Promise<T>,
-): Promise<T> {
+function adminDatabaseUrl(): string {
 	const adminUrl = process.env.DATABASE_URL;
 	if (!adminUrl) {
 		throw new Error("DATABASE_URL is not set");
 	}
-	const name = `waw_e2e_${randomBytes(6).toString("hex")}`;
-	const url = new URL(adminUrl);
-	url.pathname = `/${name}`;
+	return adminUrl;
+}
 
-	const admin = new Client({ connectionString: adminUrl });
+function disposableName(): string {
+	return `waw_e2e_${randomBytes(6).toString("hex")}`;
+}
+
+async function withAdmin<T>(run: (admin: Client) => Promise<T>): Promise<T> {
+	const admin = new Client({ connectionString: adminDatabaseUrl() });
 	await admin.connect();
 	try {
+		return await run(admin);
+	} finally {
+		await admin.end();
+	}
+}
+
+/** Creates database waw_e2e_<12 hex>, runs `run` with its URL, then drops it (WITH (FORCE)). Admin URL: process.env.DATABASE_URL. */
+export async function withDatabase<T>(
+	run: (url: string) => Promise<T>,
+): Promise<T> {
+	const name = disposableName();
+	const url = new URL(adminDatabaseUrl());
+	url.pathname = `/${name}`;
+
+	return withAdmin(async (admin) => {
 		await admin.query(`CREATE DATABASE ${name}`);
 		try {
 			return await run(url.href);
 		} finally {
 			await admin.query(`DROP DATABASE ${name} WITH (FORCE)`);
 		}
-	} finally {
-		await admin.end();
-	}
+	});
+}
+
+/** Creates login role waw_e2e_<12 hex> with a password of its own, runs `run`, then drops it. Drop what it owns inside `run`. */
+export async function withRole<T>(
+	run: (role: { name: string; password: string }) => Promise<T>,
+): Promise<T> {
+	const name = disposableName();
+	const password = `e2e-migrate-pw-${randomBytes(6).toString("hex")}`;
+
+	return withAdmin(async (admin) => {
+		await admin.query(`CREATE ROLE ${name} LOGIN PASSWORD '${password}'`);
+		try {
+			return await run({ name, password });
+		} finally {
+			await admin.query(`DROP ROLE ${name}`);
+		}
+	});
 }
 
 /** A TCP port that was free a moment ago (listen on 0, read, close). */

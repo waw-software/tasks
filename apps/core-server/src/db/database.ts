@@ -21,17 +21,29 @@ export function openDatabase(databaseUrl: string): Pool {
 
 export async function migrateDatabase(pool: Pool): Promise<void> {
 	const client = await pool.connect();
+	// Without a listener, a dropped connection crashes the process. The pending query
+	// rejects with the error, and that rejection is what propagates.
+	const onClientError = (): void => {};
+	client.on("error", onClientError);
+	// The first failure is the one to report, so a later unlock error does not replace it.
+	let failure: { error: unknown } | undefined;
 	let unlocked = false;
 	try {
 		await client.query("select pg_advisory_lock($1)", [MIGRATION_LOCK_KEY]);
 		await migrate(drizzle(client), { migrationsFolder });
-	} finally {
-		try {
-			await client.query("select pg_advisory_unlock($1)", [MIGRATION_LOCK_KEY]);
-			unlocked = true;
-		} finally {
-			// A connection that may still hold the lock is destroyed, not pooled.
-			client.release(!unlocked);
-		}
+	} catch (error) {
+		failure = { error };
+	}
+	try {
+		await client.query("select pg_advisory_unlock($1)", [MIGRATION_LOCK_KEY]);
+		unlocked = true;
+	} catch (error) {
+		failure ??= { error };
+	}
+	// A connection that may still hold the lock is destroyed, not pooled.
+	client.release(!unlocked);
+	client.off("error", onClientError);
+	if (failure) {
+		throw failure.error;
 	}
 }
