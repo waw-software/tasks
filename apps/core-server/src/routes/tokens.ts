@@ -3,6 +3,7 @@ import {
 	DeviceCredentialSchema,
 	DeviceIdentitySchema,
 	DeviceTokenParamsSchema,
+	SessionForbiddenSchema,
 	UnauthorizedSchema,
 } from "@waw/api-contract";
 import type { FastifyPluginAsync, onRequestAsyncHookHandler } from "fastify";
@@ -33,9 +34,17 @@ const tokens: FastifyPluginAsync<AppOptions> = async (
 	server.get(
 		"/tokens/current",
 		{
-			onRequest: [noStore, authenticate],
+			// The one token route that also accepts the browser session cookie.
+			onRequest: [
+				noStore,
+				requireDevice(db, { mode: "either", refreshCookie: true }),
+			],
 			schema: {
-				response: { 200: DeviceIdentitySchema, 401: UnauthorizedSchema },
+				response: {
+					200: DeviceIdentitySchema,
+					401: UnauthorizedSchema,
+					403: SessionForbiddenSchema,
+				},
 			},
 		},
 		// requireDevice answers 401 itself, so the identity is set here.

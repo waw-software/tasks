@@ -14,6 +14,13 @@ const ORIGIN_SHAPE = /^https?:\/\/[^/\\?#@\s]+\/?$/i;
 const HOST_SHAPE =
 	/^(\[[0-9a-fA-F:.]+\]|[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*\.?)(?::(\d{1,5}))?$/;
 
+// The Host header of 127.0.0.0/8, localhost or [::1], with an optional port.
+const LOOPBACK_HOST = /^(?:localhost|\[::1\]|127(?:\.\d{1,3}){3})(?::\d+)?$/i;
+
+export function isLoopbackHost(host: string | undefined): boolean {
+	return LOOPBACK_HOST.test(host ?? "");
+}
+
 export function parsePublicUrl(raw: string | undefined): string | undefined {
 	if (raw === undefined || raw === "") return undefined;
 	if (!ORIGIN_SHAPE.test(raw) || !URL.canParse(raw)) {

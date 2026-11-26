@@ -13,7 +13,7 @@ import {
 } from "@waw/api-contract";
 import type { FastifyPluginAsync } from "fastify";
 import type { AppOptions } from "../app.ts";
-import { resolvePublicUrl } from "../public-url.ts";
+import { isLoopbackHost, resolvePublicUrl } from "../public-url.ts";
 
 // The serializer writes a literal over whatever it is given, and Fastify's own 400 (a
 // malformed body) goes through the same schema. So this one accepts both shapes.
@@ -23,9 +23,6 @@ const BadRequestSchema = Type.Object({
 	code: Type.Optional(Type.String()),
 	message: Type.Optional(Type.String()),
 });
-
-// The Host header of 127.0.0.0/8, localhost or [::1], with an optional port.
-const LOOPBACK_HOST = /^(?:localhost|\[::1\]|127(?:\.\d{1,3}){3})(?::\d+)?$/i;
 
 const setupRoutes: FastifyPluginAsync<AppOptions> = async (
 	fastify,
@@ -61,7 +58,7 @@ const setupRoutes: FastifyPluginAsync<AppOptions> = async (
 			// text. The protocol is https only on the word of a trusted proxy.
 			if (
 				request.protocol !== "https" &&
-				!LOOPBACK_HOST.test(request.headers.host ?? "")
+				!isLoopbackHost(request.headers.host)
 			) {
 				return reply.code(403).send({ error: "https_required" });
 			}
