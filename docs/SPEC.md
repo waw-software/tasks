@@ -91,6 +91,21 @@ The client updates through app stores; the server updates when the user chooses.
 - Within one major API version, change only by adding. Never remove or rename fields.
 - Deprecation is soft: warn first, block later.
 
+When a server is too old is decided in [ADR 0003](decisions/0003-web-session-and-server-compatibility.md). These are the capabilities; within an API version, new capabilities are only ever added:
+
+| Capability | Added in | Without it, clients hide |
+| --- | --- | --- |
+| `connect` | M4 | Nothing: an older server shows the update screen and the client continues with limited features |
+| `today` | M5 | Today view |
+| `quick-add` | M6 | quick add |
+| `task-detail` | M7 | task detail and editing |
+| `projects` | M8 | projects, sections, Inbox and Browse |
+| `upcoming` | M9 | Upcoming |
+| `filters` | M10 | search and saved filters |
+| `sync` | M11 | offline changes and sync status |
+| `mcp` | M12 | WAW Bot access |
+| `reminders` | M14 | reminders |
+
 ### 3.3 Auth
 
 Proposed:
@@ -187,7 +202,6 @@ Work in vertical slices. Each slice includes the API, the screen and a test.
 ## 9. Open questions
 
 - Reminders: local notifications only in v1, or a push relay from the start?
-- Should the web client need the token on every visit, or keep a session?
 - How are deleted projects handled: delete their tasks or move them to Inbox?
 
 The tech stack is settled in [the stack decision](decisions/0001-project-stack.md).
