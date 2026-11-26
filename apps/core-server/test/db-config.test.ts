@@ -1,4 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { readServerConfig, redactDatabaseUrl } from "../src/db/config.js";
 
 const databaseUrl = "postgres://waw:s3cret@localhost:5432/waw";
@@ -62,6 +65,90 @@ describe("readServerConfig", () => {
 			);
 		},
 	);
+});
+
+describe("readServerConfig with DATABASE_PASSWORD_FILE", () => {
+	const url = "postgres://waw@postgres:5432/waw";
+	let directory: string;
+
+	beforeAll(() => {
+		directory = mkdtempSync(join(tmpdir(), "waw-db-config-"));
+	});
+
+	afterAll(() => {
+		rmSync(directory, { recursive: true, force: true });
+	});
+
+	function passwordFile(name: string, content: string): string {
+		const path = join(directory, name);
+		writeFileSync(path, content);
+		return path;
+	}
+
+	it("REQ-011 AC-37: builds the database URL from DATABASE_PASSWORD_FILE", () => {
+		// "%41" must survive as three characters, not turn into "A".
+		for (const password of ["p@ss/wörd", "a:b?c#d%41 e"]) {
+			const { databaseUrl } = readServerConfig({
+				DATABASE_URL: url,
+				DATABASE_PASSWORD_FILE: passwordFile("password", `${password}\n`),
+			});
+
+			const encoded = new URL(databaseUrl).password;
+			expect(encoded).toBe(encodeURIComponent(password));
+			expect(decodeURIComponent(encoded)).toBe(password);
+			expect(databaseUrl).toBe(`postgres://waw:${encoded}@postgres:5432/waw`);
+		}
+	});
+
+	it("REQ-011 AC-37: rejects an unreadable or empty password file and a URL that already has a password, without echoing either", () => {
+		const secret = passwordFile("secret", "f1le-s3cret\n");
+		const cases = [
+			{
+				url,
+				file: join(directory, "missing"),
+				message: "DATABASE_PASSWORD_FILE cannot be read",
+			},
+			{
+				url,
+				file: directory,
+				message: "DATABASE_PASSWORD_FILE cannot be read",
+			},
+			{
+				url,
+				file: passwordFile("empty", ""),
+				message: "DATABASE_PASSWORD_FILE is empty",
+			},
+			{
+				url,
+				file: passwordFile("newline", "\n"),
+				message: "DATABASE_PASSWORD_FILE is empty",
+			},
+			{
+				url: databaseUrl,
+				file: secret,
+				message:
+					"DATABASE_URL must not contain a password when DATABASE_PASSWORD_FILE is set",
+			},
+			{
+				url: `${url}?password=s3cret`,
+				file: secret,
+				message:
+					"DATABASE_URL must not contain a password when DATABASE_PASSWORD_FILE is set",
+			},
+			{
+				url: "postgres://postgres:5432/waw",
+				file: secret,
+				message:
+					"DATABASE_URL must name a user when DATABASE_PASSWORD_FILE is set",
+			},
+		];
+
+		for (const { url, file, message } of cases) {
+			expect(
+				errorMessage({ DATABASE_URL: url, DATABASE_PASSWORD_FILE: file }),
+			).toBe(message);
+		}
+	});
 });
 
 describe("redactDatabaseUrl", () => {

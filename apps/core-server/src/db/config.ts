@@ -1,10 +1,12 @@
+import { readFileSync } from "node:fs";
+
 export interface ServerConfig {
 	databaseUrl: string;
 	host: string;
 	port: number;
 }
 
-/** Throws Error whose message never contains the value of DATABASE_URL. */
+/** Throws Error whose message never contains the value of DATABASE_URL or the password. */
 export function readServerConfig(env: NodeJS.ProcessEnv): ServerConfig {
 	const databaseUrl = env.DATABASE_URL;
 	if (!databaseUrl) {
@@ -21,7 +23,46 @@ export function readServerConfig(env: NodeJS.ProcessEnv): ServerConfig {
 	if (!/^\d+$/.test(port) || Number(port) > 65535) {
 		throw new Error("PORT must be an integer from 0 to 65535");
 	}
-	return { databaseUrl, host: env.HOST ?? "127.0.0.1", port: Number(port) };
+	const passwordFile = env.DATABASE_PASSWORD_FILE;
+	return {
+		databaseUrl: passwordFile
+			? withPasswordFile(databaseUrl, passwordFile)
+			: databaseUrl,
+		host: env.HOST ?? "127.0.0.1",
+		port: Number(port),
+	};
+}
+
+function withPasswordFile(databaseUrl: string, passwordFile: string): string {
+	const url = new URL(databaseUrl);
+	// pg also takes a password from the query.
+	if (url.password || url.searchParams.has("password")) {
+		throw new Error(
+			"DATABASE_URL must not contain a password when DATABASE_PASSWORD_FILE is set",
+		);
+	}
+	if (!url.username) {
+		throw new Error(
+			"DATABASE_URL must name a user when DATABASE_PASSWORD_FILE is set",
+		);
+	}
+	// The setter leaves "%" as it is, and pg would decode what follows it.
+	url.password = encodeURIComponent(readPassword(passwordFile));
+	return url.href;
+}
+
+function readPassword(passwordFile: string): string {
+	let content: string;
+	try {
+		content = readFileSync(passwordFile, "utf8");
+	} catch {
+		throw new Error("DATABASE_PASSWORD_FILE cannot be read");
+	}
+	const password = content.replace(/[\r\n]+$/, "");
+	if (!password) {
+		throw new Error("DATABASE_PASSWORD_FILE is empty");
+	}
+	return password;
 }
 
 /** Replaces every occurrence of databaseUrl and of its password (raw and URL-decoded) in text with "***". */
