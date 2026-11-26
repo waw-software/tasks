@@ -1,0 +1,17 @@
+# A pattern without "**/" matches at the root of the build context only.
+.git
+.ship
+.claude
+.env*
+**/.env*
+node_modules
+**/node_modules
+**/dist
+**/out
+coverage
+**/coverage
+*.tsbuildinfo
+**/*.tsbuildinfo
+apps/mobile
+apps/desktop
+docs

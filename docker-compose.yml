@@ -1,0 +1,82 @@
+# WAW Tasks: the server (API, worker, web client) and its Postgres. No configuration needed.
+#
+# Needs Docker Engine 28 or later (older engines expose loopback-published ports to the local network).
+#
+# Start:   docker compose up -d
+# Update:  docker compose pull && docker compose up -d
+#          With a local build: docker compose up -d --build
+#          Back up the `postgres-data` volume before updating: migrations run on start
+#          and nothing dumps the database for you.
+# Remote:  the server listens on 127.0.0.1 only. For remote access, put a TLS reverse
+#          proxy in front of it.
+# Lost access token:
+#          docker compose exec server node dist/auth/token-cli.js issue
+#
+# Optional: WAW_PORT (default 3000), PUBLIC_URL, WAW_SERVER_IMAGE.
+#
+# The Postgres password is generated on first start and kept in the `postgres-password`
+# volume. It belongs to the database in `postgres-data`: keep the two volumes together.
+
+services:
+  server:
+    build: .
+    # "localhost/" keeps the default off Docker Hub: the pull fails and Compose builds the checkout.
+    image: ${WAW_SERVER_IMAGE:-localhost/waw-tasks-server:local}
+    environment:
+      DATABASE_URL: postgres://waw@postgres:5432/waw
+      DATABASE_PASSWORD_FILE: /run/waw-db/password
+      PUBLIC_URL: ${PUBLIC_URL:-}
+    volumes:
+      - postgres-password:/run/waw-db:ro
+    ports:
+      - "127.0.0.1:${WAW_PORT:-3000}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:17-bookworm
+    environment:
+      POSTGRES_USER: waw
+      POSTGRES_DB: waw
+      POSTGRES_PASSWORD_FILE: /run/waw-db/password
+    # Writes the password on first start, then runs the image's own entry point.
+    # Group 1000 is the server's user, which reads the file. "$$" is a literal "$".
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        set -eu
+        file=/run/waw-db/password
+        if [ ! -e "$$file" ]; then
+          if [ -e "$$PGDATA/PG_VERSION" ]; then
+            echo "the Postgres password file is missing for an existing database" >&2
+            exit 1
+          fi
+          temp="$$file.tmp"
+          rm -f "$$temp"
+          (umask 027 && od -An -N32 -tx1 /dev/urandom | tr -d ' \n' > "$$temp")
+          [ "$$(wc -c < "$$temp")" -eq 64 ]
+          chgrp 1000 "$$temp"
+          chmod 0640 "$$temp"
+          mv "$$temp" "$$file"
+        fi
+        exec docker-entrypoint.sh "$$@"
+      - "--"
+    command: ["postgres"]
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - postgres-password:/run/waw-db
+    healthcheck:
+      # Over TCP: during first-time initialization Postgres answers on the socket only.
+      test: ["CMD", "pg_isready", "-U", "waw", "-d", "waw", "-h", "127.0.0.1"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  postgres-password:

@@ -1,0 +1,13 @@
+.waw-setup-value {
+	/* One tap selects the whole value. */
+	user-select: all;
+	resize: none;
+	overflow-wrap: anywhere;
+	/* Where supported, the field grows to its value; elsewhere its rows apply. */
+	field-sizing: content;
+}
+
+.waw-setup-value:focus-visible {
+	outline: var(--waw-focus-width) solid var(--waw-focus);
+	outline-offset: var(--waw-focus-offset);
+}

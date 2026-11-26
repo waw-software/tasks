@@ -180,6 +180,10 @@ describe("parseArgs", () => {
 		expect(needs("gallery-overlays-quick-add.web-390")).toBe(true);
 		expect(needs("gallery-overlays-quick-add.electron")).toBe(true);
 		expect(needs("gallery-overlays-quick-add.ios")).toBe(false);
+		expect(needs("setup.web-390")).toBe(false);
+		expect(needs("setup.web-1440")).toBe(false);
+		expect(needs("setup-revealed.web-390")).toBe(true);
+		expect(needs("setup-revealed.web-1440")).toBe(true);
 		expect(
 			needsGalleryBuild([
 				{
@@ -230,12 +234,20 @@ describe("manifest", () => {
 			"gallery-overlays-quick-add.web-1440",
 			"gallery-overlays-quick-add.electron",
 			"gallery-overlays-quick-add.ios",
+			"setup.web-390",
+			"setup.web-1440",
+			"setup-revealed.web-390",
+			"setup-revealed.web-1440",
 		]);
-		expect(new Set(realScreens.map((s) => s.id)).size).toBe(32);
+		expect(new Set(realScreens.map((s) => s.id)).size).toBe(36);
 		const viewports = realScreens.flatMap((s) =>
 			s.surface === "web" ? [s.viewport] : [],
 		);
 		expect(viewports).toEqual([
+			{ width: 390, height: 844 },
+			{ width: 1440, height: 900 },
+			{ width: 390, height: 844 },
+			{ width: 1440, height: 900 },
 			{ width: 390, height: 844 },
 			{ width: 1440, height: 900 },
 			{ width: 390, height: 844 },
@@ -295,6 +307,10 @@ describe("manifest", () => {
 				"#/gallery/overlays/quick-add",
 				"New task",
 			],
+			["setup.web-390", "/setup", "Set up WAW Tasks"],
+			["setup.web-1440", "/setup", "Set up WAW Tasks"],
+			["setup-revealed.web-390", "/#/gallery/setup", "Connect your devices"],
+			["setup-revealed.web-1440", "/#/gallery/setup", "Connect your devices"],
 		]);
 		expect(realScreens.every((s) => s.mockup === null)).toBe(true);
 	});

@@ -5,6 +5,7 @@
 	"type": "module",
 	"scripts": {
 		"e2e": "playwright test --config playwright.config.ts",
+		"e2e:deploy": "playwright test --config playwright.deploy.config.ts",
 		"visual": "node src/capture.ts",
 		"typecheck": "tsc --noEmit -p tsconfig.json",
 		"test": "vitest run --dir src"
@@ -12,6 +13,9 @@
 	"devDependencies": {
 		"@playwright/test": "1.65.1",
 		"@types/node": "^24.19.2",
+		"@types/pg": "^8.23.1",
+		"jsqr": "^1.4.0",
+		"pg": "^8.23.1",
 		"playwright": "1.65.1",
 		"vitest": "^5.1.1"
 	}

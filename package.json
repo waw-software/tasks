@@ -7,7 +7,7 @@
 		"node": ">=24.21.0"
 	},
 	"scripts": {
-		"build:shared": "pnpm --filter @waw/api-contract build",
+		"build:shared": "pnpm --filter @waw/api-contract --filter @waw/core-worker build",
 		"format:check": "biome format .",
 		"format": "biome format --write .",
 		"lint": "biome lint --error-on-warnings .",

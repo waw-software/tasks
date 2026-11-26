@@ -1,0 +1,27 @@
+{
+	"version": "7",
+	"dialect": "postgresql",
+	"entries": [
+		{
+			"idx": 0,
+			"version": "7",
+			"when": 1795709902821,
+			"tag": "0000_device_tokens",
+			"breakpoints": true
+		},
+		{
+			"idx": 1,
+			"version": "7",
+			"when": 1795711991918,
+			"tag": "0001_pairing",
+			"breakpoints": true
+		},
+		{
+			"idx": 2,
+			"version": "7",
+			"when": 1795712922769,
+			"tag": "0002_setup_claim",
+			"breakpoints": true
+		}
+	]
+}
