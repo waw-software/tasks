@@ -1,5 +1,7 @@
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { needsGalleryBuild, parseArgs, type FsChecks } from "./args.ts";
+import { type FsChecks, needsGalleryBuild, parseArgs } from "./args.ts";
 import { screens as realScreens, type Screen } from "./screens.ts";
 
 const root = "/repo";
@@ -157,11 +159,11 @@ describe("parseArgs", () => {
 					root,
 				).screens,
 			);
-		expect(needs("shell.web-390")).toBe(false);
+		expect(needs("shell.web-390")).toBe(true);
 		expect(needs("shell.electron")).toBe(false);
 		expect(needs("gallery.web-390")).toBe(true);
 		expect(needs("gallery.electron")).toBe(true);
-		expect(needs("shell.web-390", "gallery.ios")).toBe(false);
+		expect(needs("shell.electron", "gallery.ios")).toBe(false);
 		expect(needs("gallery-rows.web-390")).toBe(true);
 		expect(needs("gallery-rows.electron")).toBe(true);
 		expect(needs("gallery-rows.ios")).toBe(false);
@@ -197,9 +199,37 @@ describe("parseArgs", () => {
 			]),
 		).toBe(false);
 	});
+
+	it("the connect, update and shell captures request a gallery build", () => {
+		const needs = (id: string) =>
+			needsGalleryBuild(realScreens.filter((s) => s.id === id));
+		for (const id of [
+			"shell.web-390",
+			"shell.web-1440",
+			"connect.web-390",
+			"connect.web-1440",
+			"update-server.web-390",
+			"update-server.web-1440",
+		]) {
+			expect(needs(id), id).toBe(true);
+		}
+		expect(needs("setup.web-390")).toBe(false);
+	});
 });
 
 describe("manifest", () => {
+	it("every web entry with a mockup names an existing PNG", () => {
+		const repoRoot = resolve(import.meta.dirname, "../../..");
+		const mockups = realScreens.flatMap((s) =>
+			s.surface === "web" && s.mockup !== null ? [s.mockup] : [],
+		);
+		expect(mockups.length).toBeGreaterThan(0);
+		for (const mockup of mockups) {
+			expect(mockup).toMatch(/\.png$/);
+			expect(existsSync(resolve(repoRoot, mockup)), mockup).toBe(true);
+		}
+	});
+
 	it("C3 manifest has the shell and gallery screens with unique ids and the agreed viewports", () => {
 		expect(realScreens.map((s) => s.id)).toEqual([
 			"shell.web-390",
@@ -238,12 +268,20 @@ describe("manifest", () => {
 			"setup.web-1440",
 			"setup-revealed.web-390",
 			"setup-revealed.web-1440",
+			"connect.web-390",
+			"connect.web-1440",
+			"update-server.web-390",
+			"update-server.web-1440",
 		]);
-		expect(new Set(realScreens.map((s) => s.id)).size).toBe(36);
+		expect(new Set(realScreens.map((s) => s.id)).size).toBe(40);
 		const viewports = realScreens.flatMap((s) =>
 			s.surface === "web" ? [s.viewport] : [],
 		);
 		expect(viewports).toEqual([
+			{ width: 390, height: 844 },
+			{ width: 1440, height: 900 },
+			{ width: 390, height: 844 },
+			{ width: 1440, height: 900 },
 			{ width: 390, height: 844 },
 			{ width: 1440, height: 900 },
 			{ width: 390, height: 844 },
@@ -271,8 +309,8 @@ describe("manifest", () => {
 			return [];
 		});
 		expect(pages).toEqual([
-			["shell.web-390", "/", "WAW Tasks"],
-			["shell.web-1440", "/", "WAW Tasks"],
+			["shell.web-390", "/#/gallery/shell", "WAW Tasks"],
+			["shell.web-1440", "/#/gallery/shell", "WAW Tasks"],
 			["shell.electron", undefined, "WAW Tasks"],
 			["gallery.web-390", "/#/gallery", "Component gallery"],
 			["gallery.web-1440", "/#/gallery", "Component gallery"],
@@ -311,7 +349,25 @@ describe("manifest", () => {
 			["setup.web-1440", "/setup", "Set up WAW Tasks"],
 			["setup-revealed.web-390", "/#/gallery/setup", "Connect your devices"],
 			["setup-revealed.web-1440", "/#/gallery/setup", "Connect your devices"],
+			["connect.web-390", "/#/gallery/connect", "Connect to your server"],
+			["connect.web-1440", "/#/gallery/connect", "Connect to your server"],
+			[
+				"update-server.web-390",
+				"/#/gallery/update-server",
+				"Your server needs an update",
+			],
+			[
+				"update-server.web-1440",
+				"/#/gallery/update-server",
+				"Your server needs an update",
+			],
 		]);
-		expect(realScreens.every((s) => s.mockup === null)).toBe(true);
+		expect(
+			realScreens.flatMap((s) => (s.mockup === null ? [] : [[s.id, s.mockup]])),
+		).toEqual([
+			["connect.web-390", "docs/design/screens/mobile/Connect.png"],
+			["connect.web-1440", "docs/design/screens/desktop/Connect.png"],
+			["update-server.web-390", "docs/design/screens/mobile/UpdateServer.png"],
+		]);
 	});
 });

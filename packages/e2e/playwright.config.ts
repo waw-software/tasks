@@ -19,6 +19,7 @@ export default defineConfig({
 		"pairing.spec.ts",
 		"setup.spec.ts",
 		"capability-fixture.spec.ts",
+		"connect-web.spec.ts",
 	],
 	retries: 0,
 	workers: 1,
