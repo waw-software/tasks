@@ -1,5 +1,6 @@
-# Builds and starts the real server and a production web preview, then runs the Playwright
-# end-to-end tests (scripts/env.sh e2e). The failure artifact holds the Playwright output.
+# Builds and starts the real server, which serves the built web client, against the job's
+# Postgres service, then runs the Playwright end-to-end tests (scripts/env.sh e2e). The
+# failure artifact holds the Playwright output.
 name: e2e
 
 on:

@@ -37,9 +37,14 @@ const flush = () => new Promise((resolve) => setImmediate(resolve));
 describe("createRuntime", () => {
 	it("REQ-001 AC-01 starts migrations, then the worker, then HTTP", async () => {
 		const { calls, steps } = fakeSteps();
+		const migration = deferred();
 		const worker = deferred();
 		const runtime = createRuntime({
 			...steps,
+			migrate: async () => {
+				await steps.migrate();
+				await migration.promise;
+			},
 			startWorker: async () => {
 				await steps.startWorker();
 				await worker.promise;
@@ -47,6 +52,10 @@ describe("createRuntime", () => {
 		});
 
 		const started = runtime.start();
+		await flush();
+		expect(calls).toEqual(["migrate"]);
+
+		migration.resolve();
 		await flush();
 		expect(calls).toEqual(["migrate", "startWorker"]);
 

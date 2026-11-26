@@ -54,14 +54,16 @@ async function main(): Promise<void> {
 		startWorker: () => worker.start(),
 		listen: async () => {
 			await server.register(app, { db, webRoot });
-			process.on("SIGINT", shutdown);
-			process.on("SIGTERM", shutdown);
 			await server.listen({ host, port });
 		},
 		closeHttp: () => server.close(),
 		stopWorker: () => worker.stop(),
 		closeDatabase: () => pool.end(),
 	});
+
+	// Installed before start, so a signal during startup also gets the ordered shutdown.
+	process.on("SIGINT", shutdown);
+	process.on("SIGTERM", shutdown);
 
 	try {
 		await runtime.start();
