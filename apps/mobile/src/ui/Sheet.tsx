@@ -1,6 +1,8 @@
 import { theme } from "@waw/design-tokens";
-import { type ReactNode, useEffect, useRef } from "react";
+import { type ComponentRef, type ReactNode, useEffect, useRef } from "react";
 import {
+	AccessibilityInfo,
+	findNodeHandle,
 	KeyboardAvoidingView,
 	Modal,
 	Pressable,
@@ -33,6 +35,7 @@ export function Sheet({
 	onAfterClose,
 }: SheetProps) {
 	const awaitingAfterClose = useRef(open);
+	const titleRef = useRef<ComponentRef<typeof Text>>(null);
 
 	useEffect(() => {
 		if (open) {
@@ -48,6 +51,11 @@ export function Sheet({
 		onAfterClose?.();
 	}
 
+	function focusTitle() {
+		const node = findNodeHandle(titleRef.current);
+		if (node) AccessibilityInfo.setAccessibilityFocus(node);
+	}
+
 	return (
 		<Modal
 			transparent
@@ -56,6 +64,7 @@ export function Sheet({
 			visible={open}
 			onRequestClose={() => onDismiss("escape")}
 			onDismiss={finishClose}
+			onShow={focusTitle}
 		>
 			<View style={styles.frame}>
 				<Pressable
@@ -73,12 +82,17 @@ export function Sheet({
 				>
 					<View
 						testID="sheet-surface"
+						role="dialog"
 						accessibilityViewIsModal
 						onAccessibilityEscape={() => onDismiss("escape")}
 						style={styles.surface}
 					>
 						<View style={styles.header}>
-							<Text accessibilityRole="header" style={styles.title}>
+							<Text
+								ref={titleRef}
+								accessibilityRole="header"
+								style={styles.title}
+							>
 								{title}
 							</Text>
 							<Pressable

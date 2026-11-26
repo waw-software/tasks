@@ -127,6 +127,20 @@ test("quick add: a page mounted open focuses its launcher after closing", () => 
 	expect(document.activeElement).toBe(button("Quick add"));
 });
 
+test("quick add: focus returns to the launcher even when it did not have it", () => {
+	stubViewport(1440);
+	render(<OverlaysGallery />);
+	const back = screen.getByRole("link", { name: "Back" });
+	back.focus();
+
+	// A click in jsdom, as in some browsers, leaves the focus where it was.
+	fireEvent.click(button("Quick add"));
+	fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+
+	expect(screen.queryByRole("dialog")).toBeNull();
+	expect(document.activeElement).toBe(button("Quick add"));
+});
+
 test("the page shows Back and the three sample rows", () => {
 	stubViewport(390);
 	render(<OverlaysGallery />);

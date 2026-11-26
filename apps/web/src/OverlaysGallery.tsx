@@ -186,9 +186,8 @@ export default function OverlaysGallery({
 
 	const close = () => setOpen(false);
 	// A page mounted open has no launcher to return to, and not every browser
-	// focuses a button on click.
+	// focuses a button on click, so the surface cannot know where to return.
 	const focusLauncher = () => {
-		if (document.activeElement !== document.body) return;
 		launcherRef.current?.querySelector("button")?.focus();
 	};
 	const QuickAdd = phone ? Sheet : Dialog;
