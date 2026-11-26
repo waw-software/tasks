@@ -5,6 +5,7 @@ import Fastify, { type FastifyInstance } from "fastify";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { app } from "../src/app.js";
 import type { SetupClaimResult, SetupService } from "../src/auth/setup.js";
+import { publicAddressTrustProxy } from "../src/public-url.js";
 
 const INDEX = "<!doctype html><title>shell</title>";
 const CODE = `waw_setup_${"c".repeat(43)}`;
@@ -37,7 +38,7 @@ describe("REQ-011 AC-39 the first-run setup routes", () => {
 			await mkdir(join(webRoot, dir));
 		}
 		await writeFile(join(webRoot, "index.html"), INDEX);
-		server = Fastify();
+		server = Fastify({ trustProxy: publicAddressTrustProxy });
 		await server.register(app, { webRoot, publicUrl: PUBLIC_URL, setup });
 	});
 
@@ -105,13 +106,13 @@ describe("REQ-011 AC-39 the first-run setup routes", () => {
 	});
 
 	it("answers 400 without claiming when the request gives no public address", async () => {
-		const own = Fastify();
+		const own = Fastify({ trustProxy: publicAddressTrustProxy });
 		await own.register(app, { setup });
 
 		const res = await own.inject({
 			method: "POST",
 			url: "/setup/claim",
-			headers: { host: "bad host" },
+			headers: { host: "bad host", "x-forwarded-proto": "https" },
 			payload: { code: CODE },
 		});
 		await own.close();
@@ -119,6 +120,64 @@ describe("REQ-011 AC-39 the first-run setup routes", () => {
 		expect(res.statusCode).toBe(400);
 		expect(res.json()).toEqual({ error: "invalid_public_address" });
 		expect(claims).toEqual([]);
+	});
+
+	const claimFrom = (
+		headers: Record<string, string>,
+		remoteAddress = "203.0.113.7",
+	) =>
+		server.inject({
+			method: "POST",
+			url: "/setup/claim",
+			remoteAddress,
+			headers,
+			payload: { code: CODE },
+		});
+
+	it("accepts a claim over plain HTTP on a loopback host", async () => {
+		for (const host of [
+			"127.0.0.1:3000",
+			"localhost:3000",
+			"localhost",
+			"[::1]:3000",
+			"127.8.9.10",
+		]) {
+			const res = await claimFrom({ host });
+			expect({ host, status: res.statusCode }).toEqual({ host, status: 201 });
+		}
+		expect(claims).toHaveLength(5);
+	});
+
+	it("refuses a claim over plain HTTP on another host with 403 https_required, without calling the service", async () => {
+		for (const headers of [
+			{ host: "tasks.example.com" },
+			{ host: "192.168.1.20:3000" },
+			{ host: "127.0.0.1.example.com" },
+			{ host: "localhost.example.com:3000" },
+			{ host: "example.com@localhost" },
+			// The sender is not a trusted proxy, so its header does not count.
+			{ host: "tasks.example.com", "x-forwarded-proto": "https" },
+		]) {
+			const res = await claimFrom(headers);
+			expect({ headers, status: res.statusCode }).toEqual({
+				headers,
+				status: 403,
+			});
+			expect(res.json()).toEqual({ error: "https_required" });
+			expect(res.headers["cache-control"]).toBe("no-store");
+			expect(res.headers["referrer-policy"]).toBe("no-referrer");
+		}
+		expect(claims).toEqual([]);
+	});
+
+	it("accepts a claim on another host when a trusted proxy reports https", async () => {
+		const res = await claimFrom(
+			{ host: "tasks.example.com", "x-forwarded-proto": "https" },
+			"10.0.0.5",
+		);
+
+		expect(res.statusCode).toBe(201);
+		expect(claims).toEqual([[CODE, PUBLIC_URL]]);
 	});
 
 	it("rejects a malformed body with 400", async () => {

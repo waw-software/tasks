@@ -5,6 +5,7 @@ import {
 } from "@fastify/type-provider-typebox";
 import {
 	type BadPublicAddressSchema,
+	HttpsRequiredSchema,
 	SetupClaimBodySchema,
 	SetupClaimResponseSchema,
 	SetupClosedSchema,
@@ -22,6 +23,9 @@ const BadRequestSchema = Type.Object({
 	code: Type.Optional(Type.String()),
 	message: Type.Optional(Type.String()),
 });
+
+// The Host header of 127.0.0.0/8, localhost or [::1], with an optional port.
+const LOOPBACK_HOST = /^(?:localhost|\[::1\]|127(?:\.\d{1,3}){3})(?::\d+)?$/i;
 
 const setupRoutes: FastifyPluginAsync<AppOptions> = async (
 	fastify,
@@ -47,11 +51,20 @@ const setupRoutes: FastifyPluginAsync<AppOptions> = async (
 					201: SetupClaimResponseSchema,
 					400: BadRequestSchema,
 					401: UnauthorizedSchema,
+					403: HttpsRequiredSchema,
 					409: SetupClosedSchema,
 				},
 			},
 		},
 		async (request, reply) => {
+			// The answer carries an owner token, so it must not cross a network in clear
+			// text. The protocol is https only on the word of a trusted proxy.
+			if (
+				request.protocol !== "https" &&
+				!LOOPBACK_HOST.test(request.headers.host ?? "")
+			) {
+				return reply.code(403).send({ error: "https_required" });
+			}
 			const origin = resolvePublicUrl(request, publicUrl);
 			if (origin === null) {
 				const body: Static<typeof BadPublicAddressSchema> = {

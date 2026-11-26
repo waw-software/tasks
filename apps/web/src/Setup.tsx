@@ -9,6 +9,7 @@ const failed = "Setup failed. Try again.";
 
 const claimErrors: Partial<Record<number, string>> = {
 	401: "That code is not right. Check the latest code in the server log.",
+	403: "Open this page over HTTPS, or on the server itself at http://127.0.0.1:3000/setup.",
 	409: "This server is already set up. Use the token you saved, or issue a new one with the CLI.",
 };
 
@@ -152,7 +153,9 @@ export function Setup({
 
 	if (result) return <Result result={result} />;
 
-	const blocked = pending || code === "";
+	// A pasted code often carries spaces around it.
+	const trimmedCode = code.trim();
+	const blocked = pending || trimmedCode === "";
 
 	const claim = async () => {
 		if (blocked) return;
@@ -162,7 +165,7 @@ export function Setup({
 			const response = await fetch("/setup/claim", {
 				method: "POST",
 				headers: { "content-type": "application/json" },
-				body: JSON.stringify({ code }),
+				body: JSON.stringify({ code: trimmedCode }),
 			});
 			if (response.status === 201) {
 				setResult((await response.json()) as SetupClaimResponse);

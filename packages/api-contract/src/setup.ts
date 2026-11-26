@@ -21,5 +21,9 @@ export const SetupClosedSchema = Type.Object({
 	error: Type.Literal("setup_closed"),
 });
 
+export const HttpsRequiredSchema = Type.Object({
+	error: Type.Literal("https_required"),
+});
+
 export type SetupClaimBody = Static<typeof SetupClaimBodySchema>;
 export type SetupClaimResponse = Static<typeof SetupClaimResponseSchema>;

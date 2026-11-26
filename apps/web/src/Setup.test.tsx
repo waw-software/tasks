@@ -126,3 +126,41 @@ test("REQ-011 AC-39: shows the wrong-code error on 401 and the already-set-up me
 		expect(screen.queryByRole("img")).toBeNull();
 	}
 });
+
+test("REQ-011 AC-39: shows the HTTPS message on 403, without a token", async () => {
+	vi.stubGlobal(
+		"fetch",
+		vi.fn(async () => respond(403, { error: "https_required" })),
+	);
+
+	render(<Setup />);
+	enterCode("setup-code");
+	fireEvent.click(submitButton());
+
+	await vi.waitFor(() => {
+		expect(screen.getByRole("alert").textContent).toBe(
+			"Open this page over HTTPS, or on the server itself at http://127.0.0.1:3000/setup.",
+		);
+	});
+	expect(screen.queryByLabelText("Access token")).toBeNull();
+	expect(screen.queryByRole("img")).toBeNull();
+});
+
+test("REQ-011 AC-39: sends the code without surrounding spaces", () => {
+	const fetchMock = vi.fn(() => new Promise<Response>(() => {}));
+	vi.stubGlobal("fetch", fetchMock);
+
+	render(<Setup />);
+	// Spaces alone are no code.
+	enterCode("   ");
+	expect(submitButton().disabled).toBe(true);
+
+	enterCode("  setup-code  ");
+	fireEvent.click(submitButton());
+
+	expect(fetchMock).toHaveBeenCalledWith("/setup/claim", {
+		method: "POST",
+		headers: { "content-type": "application/json" },
+		body: '{"code":"setup-code"}',
+	});
+});
