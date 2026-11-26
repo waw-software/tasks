@@ -266,7 +266,10 @@ test("REQ-011 AC-37 REQ-011 AC-39 starts the server and Postgres from the compos
 
 		const health = await fetch(`${baseUrl}/health`);
 		expect(health.status).toBe(200);
-		expect(await health.json()).toEqual({ apiVersion: 1, capabilities: [] });
+		expect(await health.json()).toEqual({
+			apiVersion: 1,
+			capabilities: ["connect"],
+		});
 
 		const fresh = await fetch(`${baseUrl}/`, { redirect: "manual" });
 		expect(fresh.status).toBe(302);

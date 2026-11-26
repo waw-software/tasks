@@ -1,14 +1,16 @@
 import { type Static, Type } from "typebox";
+import {
+	DEVICE_TOKEN_ID_PATTERN,
+	DEVICE_TOKEN_PATTERN,
+} from "./credential-patterns.js";
 
-// The pattern excludes the urn:uuid: form that the uuid format also accepts.
 export const DeviceTokenIdSchema = Type.String({
 	format: "uuid",
-	pattern:
-		"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+	pattern: DEVICE_TOKEN_ID_PATTERN,
 });
 
 export const DeviceTokenSchema = Type.String({
-	pattern: "^waw_dev_[A-Za-z0-9_-]{43}$",
+	pattern: DEVICE_TOKEN_PATTERN,
 });
 
 export const DeviceIdentitySchema = Type.Object({ id: DeviceTokenIdSchema });

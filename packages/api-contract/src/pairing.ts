@@ -1,7 +1,8 @@
 import { type Static, Type } from "typebox";
+import { PAIRING_TOKEN_PATTERN } from "./credential-patterns.js";
 
 export const PairingTokenSchema = Type.String({
-	pattern: "^waw_pair_[A-Za-z0-9_-]{43}$",
+	pattern: PAIRING_TOKEN_PATTERN,
 });
 
 export const PairingRedeemBodySchema = Type.Object(

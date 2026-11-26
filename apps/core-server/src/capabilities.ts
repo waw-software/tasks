@@ -1,1 +1,1 @@
-export const CAPABILITIES: readonly string[] = [];
+export const CAPABILITIES: readonly string[] = ["connect"];

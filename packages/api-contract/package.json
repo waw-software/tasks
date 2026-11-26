@@ -7,10 +7,15 @@
 		".": {
 			"types": "./dist/index.d.ts",
 			"default": "./dist/index.js"
+		},
+		"./connect": {
+			"types": "./dist/connect.d.ts",
+			"default": "./dist/connect.js"
 		}
 	},
 	"scripts": {
 		"build": "tsc -p tsconfig.build.json",
+		"test": "vitest run --dir test",
 		"typecheck": "tsc --noEmit -p tsconfig.json"
 	},
 	"dependencies": {
