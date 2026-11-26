@@ -48,7 +48,7 @@ test("REQ-010 AC-34 production ignores the fixture environment", async ({
 
 		expect(await healthOf(request, server)).toEqual({
 			apiVersion: 1,
-			capabilities: [],
+			capabilities: ["connect"],
 		});
 	});
 });

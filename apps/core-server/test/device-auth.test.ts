@@ -279,7 +279,10 @@ describe("device auth", () => {
 		const health = await target.inject({ method: "GET", url: "/health" });
 
 		expect(health.statusCode).toBe(200);
-		expect(health.json()).toEqual({ apiVersion: 1, capabilities: [] });
+		expect(health.json()).toEqual({
+			apiVersion: 1,
+			capabilities: ["connect"],
+		});
 		expect((await getCurrent(target)).statusCode).toBe(401);
 		expect(lookups()).toBe(0);
 	});

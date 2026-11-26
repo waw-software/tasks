@@ -104,7 +104,10 @@ test("REQ-010 AC-36 REQ-001 AC-01 keeps /health public with the token routes ins
 
 		const response = await fetch(`${baseUrl}/health`);
 		expect(response.status).toBe(200);
-		expect(await response.json()).toEqual({ apiVersion: 1, capabilities: [] });
+		expect(await response.json()).toEqual({
+			apiVersion: 1,
+			capabilities: ["connect"],
+		});
 	});
 });
 

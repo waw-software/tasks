@@ -1,7 +1,6 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import { afterEach, describe, expect, it } from "vitest";
 import { type AppOptions, app } from "../src/app.js";
-import { CAPABILITIES } from "../src/capabilities.js";
 
 describe("GET /health", () => {
 	let server: FastifyInstance;
@@ -21,7 +20,7 @@ describe("GET /health", () => {
 
 		expect(res.statusCode).toBe(200);
 		expect(res.headers["content-type"]).toMatch(/^application\/json/);
-		expect(res.json()).toEqual({ apiVersion: 1, capabilities: [] });
+		expect(res.json()).toEqual({ apiVersion: 1, capabilities: ["connect"] });
 	});
 
 	it("REQ-001 AC-01: GET /health answers only the contract fields", async () => {
@@ -49,10 +48,7 @@ describe("GET /health", () => {
 	it("REQ-010 AC-34 serves the capability list it was given: none means the default", async () => {
 		const res = await getHealth();
 
-		expect(res.json()).toEqual({
-			apiVersion: 1,
-			capabilities: [...CAPABILITIES],
-		});
+		expect(res.json()).toEqual({ apiVersion: 1, capabilities: ["connect"] });
 		expect(res.headers["cache-control"]).toBe("no-store");
 	});
 

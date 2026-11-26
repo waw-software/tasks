@@ -195,7 +195,10 @@ test("REQ-011 AC-39 issues a one-hour pairing link from the request origin", asy
 		// REQ-010 AC-36: pairing leaves /health as it was.
 		const health = await fetch(`${baseUrl}/health`);
 		expect(health.status).toBe(200);
-		expect(await health.json()).toEqual({ apiVersion: 1, capabilities: [] });
+		expect(await health.json()).toEqual({
+			apiVersion: 1,
+			capabilities: ["connect"],
+		});
 	});
 });
 

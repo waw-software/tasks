@@ -46,7 +46,10 @@ async function journalCount(client: Client): Promise<number> {
 async function expectHealthy(baseUrl: string): Promise<void> {
 	const response = await fetch(`${baseUrl}/health`);
 	expect(response.status).toBe(200);
-	expect(await response.json()).toEqual({ apiVersion: 1, capabilities: [] });
+	expect(await response.json()).toEqual({
+		apiVersion: 1,
+		capabilities: ["connect"],
+	});
 }
 
 /** "connected", or the error code of the failed TCP connect. */

@@ -23,7 +23,10 @@ test("REQ-001 AC-01 REQ-010 AC-36 serves GET /health over HTTP", async ({
 	const response = await request.get(`${ORIGIN}/health`);
 	expect(response.status()).toBe(200);
 	expect(response.headers()["content-type"]).toContain("application/json");
-	expect(await response.json()).toEqual({ apiVersion: 1, capabilities: [] });
+	expect(await response.json()).toEqual({
+		apiVersion: 1,
+		capabilities: ["connect"],
+	});
 });
 
 test("REQ-011 AC-39 redirects a fresh server's root to /setup", async ({
@@ -84,7 +87,10 @@ test.describe("on a claimed server", () => {
 	}) => {
 		const response = await request.get(`${claimedOrigin}/health`);
 		expect(response.status()).toBe(200);
-		expect(await response.json()).toEqual({ apiVersion: 1, capabilities: [] });
+		expect(await response.json()).toEqual({
+			apiVersion: 1,
+			capabilities: ["connect"],
+		});
 	});
 
 	test("REQ-001 AC-03 shows the web shell heading on the server origin", async ({
