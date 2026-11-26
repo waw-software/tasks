@@ -28,6 +28,34 @@ interface Claim {
 	qrDataUrl: string;
 }
 
+/** Runs the compiled operator CLI and returns its stdout; a non-zero exit rejects. */
+async function runCli(databaseUrl: string, args: string[]): Promise<string> {
+	const { stdout } = await promisify(execFile)(
+		process.execPath,
+		["apps/core-server/dist/auth/token-cli.js", ...args],
+		{
+			cwd: root,
+			env: { ...process.env, DATABASE_URL: databaseUrl },
+			timeout: 30_000,
+		},
+	);
+	return stdout;
+}
+
+/** Issues a device token with the CLI. No error or assertion quotes it. */
+async function issueWithCli(databaseUrl: string): Promise<string> {
+	const output = await runCli(databaseUrl, ["issue"]);
+	let token: unknown;
+	try {
+		({ token } = JSON.parse(output) as { token?: unknown });
+	} catch {
+		// The parser's message quotes its input, which can hold the token.
+		throw new Error("The CLI did not print a JSON credential");
+	}
+	expect(DEVICE_TOKEN_PATTERN.test(String(token))).toBe(true);
+	return String(token);
+}
+
 function claim(origin: string, code: string): Promise<Response> {
 	return fetch(`${origin}/setup/claim`, {
 		method: "POST",
@@ -191,15 +219,7 @@ test("REQ-011 AC-39 admits one claim and stays closed after restart and revocati
 		const { id } = (await current.json()) as { id: string };
 		await server.stop();
 
-		await promisify(execFile)(
-			process.execPath,
-			["apps/core-server/dist/auth/token-cli.js", "revoke", id],
-			{
-				cwd: root,
-				env: { ...process.env, DATABASE_URL: databaseUrl },
-				timeout: 30_000,
-			},
-		);
+		await runCli(databaseUrl, ["revoke", id]);
 
 		const restarted = spawnServer(databaseUrl, undefined, {
 			PUBLIC_URL: undefined,
@@ -207,10 +227,16 @@ test("REQ-011 AC-39 admits one claim and stays closed after restart and revocati
 		try {
 			const secondOrigin = await restarted.listening();
 			expect((await currentToken(secondOrigin, accessToken)).status).toBe(401);
-			expect(restarted.output().split("\n").some(isSetupCodeLine)).toBe(false);
 			await expectShell(secondOrigin);
 			await expectRedirect(`${secondOrigin}/setup`, "/");
 			await expectClosed(await claim(secondOrigin, setupCode));
+
+			// A lost token is recovered with the CLI, which does not reopen setup.
+			const replacement = await issueWithCli(databaseUrl);
+			expect((await currentToken(secondOrigin, replacement)).status).toBe(200);
+			await expectRedirect(`${secondOrigin}/setup`, "/");
+			await expectClosed(await claim(secondOrigin, setupCode));
+			expect(restarted.output().split("\n").some(isSetupCodeLine)).toBe(false);
 		} finally {
 			await restarted.stop();
 		}

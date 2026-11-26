@@ -19,6 +19,7 @@ import {
 	withCompose,
 } from "./support/deploy.ts";
 import { freePort } from "./support/server.ts";
+import { setupCodeFrom } from "./support/setup.ts";
 
 const TOKEN_PATTERN = /^waw_dev_[A-Za-z0-9_-]{43}$/;
 const PROBE_TAG = "0001_deploy_probe";
@@ -73,6 +74,38 @@ async function expectAuthenticated(
 	});
 	expect(response.status).toBe(200);
 	expect(await response.json()).toEqual({ id: credential.id });
+}
+
+/**
+ * Claims a fresh project with the code from its server log, as the operator does, and
+ * proves the access token. No error or assertion echoes the code or a token.
+ */
+async function claimSetup(
+	project: ComposeProject,
+	baseUrl: string,
+): Promise<void> {
+	const code = setupCodeFrom(
+		await project.compose(["logs", "--no-log-prefix", "server"]),
+	);
+	const response = await fetch(`${baseUrl}/setup/claim`, {
+		method: "POST",
+		headers: { "content-type": "application/json" },
+		body: JSON.stringify({ code }),
+	});
+	expect(response.status).toBe(201);
+	const claimed = (await response.json()) as Record<string, unknown>;
+	expect(Object.keys(claimed).sort()).toEqual([
+		"accessToken",
+		"pairingLink",
+		"qrDataUrl",
+		"serverUrl",
+	]);
+	const accessToken = String(claimed.accessToken);
+	expect(TOKEN_PATTERN.test(accessToken)).toBe(true);
+	const current = await fetch(`${baseUrl}/tokens/current`, {
+		headers: { authorization: `Bearer ${accessToken}` },
+	});
+	expect(current.status).toBe(200);
 }
 
 async function query(project: ComposeProject, sql: string): Promise<string> {
@@ -224,7 +257,7 @@ async function buildUpdateImage(tag: string, base: string): Promise<void> {
 	}
 }
 
-test("REQ-011 AC-37 starts the server and Postgres from the compose file with no configuration", async () => {
+test("REQ-011 AC-37 REQ-011 AC-39 starts the server and Postgres from the compose file with no configuration", async () => {
 	await withCompose(async (project) => {
 		// A plain `up` has to build the checkout: nothing holds this image yet.
 		expect(await isLocalImage(project.image)).toBe(false);
@@ -235,7 +268,12 @@ test("REQ-011 AC-37 starts the server and Postgres from the compose file with no
 		expect(health.status).toBe(200);
 		expect(await health.json()).toEqual({ apiVersion: 1, capabilities: [] });
 
-		const shell = await fetch(`${baseUrl}/`);
+		const fresh = await fetch(`${baseUrl}/`, { redirect: "manual" });
+		expect(fresh.status).toBe(302);
+		expect(fresh.headers.get("location")).toBe("/setup");
+		await claimSetup(project, baseUrl);
+
+		const shell = await fetch(`${baseUrl}/`, { redirect: "manual" });
 		expect(shell.status).toBe(200);
 		const html = await shell.text();
 		expect(html).toContain("WAW Tasks");
