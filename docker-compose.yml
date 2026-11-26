@@ -1,5 +1,7 @@
 # WAW Tasks: the server (API, worker, web client) and its Postgres. No configuration needed.
 #
+# Needs Docker Engine 28 or later (older engines expose loopback-published ports to the local network).
+#
 # Start:   docker compose up -d
 # Update:  docker compose pull && docker compose up -d
 #          With a local build: docker compose up -d --build
@@ -18,7 +20,8 @@
 services:
   server:
     build: .
-    image: ${WAW_SERVER_IMAGE:-waw-tasks-server:local}
+    # "localhost/" keeps the default off Docker Hub: the pull fails and Compose builds the checkout.
+    image: ${WAW_SERVER_IMAGE:-localhost/waw-tasks-server:local}
     environment:
       DATABASE_URL: postgres://waw@postgres:5432/waw
       DATABASE_PASSWORD_FILE: /run/waw-db/password

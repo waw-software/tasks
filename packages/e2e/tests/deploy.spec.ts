@@ -14,12 +14,12 @@ import { expect, test } from "@playwright/test";
 import {
 	type ComposeProject,
 	docker,
+	removeImage,
 	waitForOk,
 	withCompose,
 } from "./support/deploy.ts";
 import { freePort } from "./support/server.ts";
 
-const BASELINE_IMAGE = "waw-tasks-server:local";
 const TOKEN_PATTERN = /^waw_dev_[A-Za-z0-9_-]{43}$/;
 const PROBE_TAG = "0001_deploy_probe";
 
@@ -135,16 +135,19 @@ async function isLocalImage(reference: string): Promise<boolean> {
 	return (await docker(["image", "ls", "-q", reference])).trim() !== "";
 }
 
+async function serverContainer(project: ComposeProject): Promise<string> {
+	return (await project.compose(["ps", "-q", "server"])).trim();
+}
+
 /** The reference and the image id of the running server container. */
 async function serverImage(
 	project: ComposeProject,
 ): Promise<{ reference: string; id: string }> {
-	const container = (await project.compose(["ps", "-q", "server"])).trim();
 	const output = await docker([
 		"inspect",
 		"--format",
 		"{{.Config.Image}} {{.Image}}",
-		container,
+		await serverContainer(project),
 	]);
 	const [reference = "", id = ""] = output.trim().split(" ");
 	return { reference, id };
@@ -173,8 +176,8 @@ async function withRegistry<T>(
 	}
 }
 
-/** Builds `tag` from the baseline image plus the probe migration and its journal entry. */
-async function buildUpdateImage(tag: string): Promise<void> {
+/** Builds `tag` from the `base` image plus the probe migration and its journal entry. */
+async function buildUpdateImage(tag: string, base: string): Promise<void> {
 	const journal = JSON.parse(
 		await readFile(
 			repoPath("apps/core-server/migrations/meta/_journal.json"),
@@ -210,6 +213,8 @@ async function buildUpdateImage(tag: string): Promise<void> {
 			"build",
 			"--file",
 			fixturePath("Dockerfile"),
+			"--build-arg",
+			`BASE=${base}`,
 			"--tag",
 			tag,
 			context,
@@ -221,7 +226,9 @@ async function buildUpdateImage(tag: string): Promise<void> {
 
 test("REQ-011 AC-37 starts the server and Postgres from the compose file with no configuration", async () => {
 	await withCompose(async (project) => {
-		await project.compose(["up", "-d", "--build", "--wait"]);
+		// A plain `up` has to build the checkout: nothing holds this image yet.
+		expect(await isLocalImage(project.image)).toBe(false);
+		await project.compose(["up", "-d", "--wait"]);
 		const baseUrl = await project.waitHealthy();
 
 		const health = await fetch(`${baseUrl}/health`);
@@ -230,7 +237,15 @@ test("REQ-011 AC-37 starts the server and Postgres from the compose file with no
 
 		const shell = await fetch(`${baseUrl}/`);
 		expect(shell.status).toBe(200);
-		expect(await shell.text()).toContain("WAW Tasks");
+		const html = await shell.text();
+		expect(html).toContain("WAW Tasks");
+
+		const asset = /assets\/[^"'\s]+\.js/.exec(html)?.[0];
+		expect(asset).toBeDefined();
+		const script = await fetch(`${baseUrl}/${asset}`);
+		expect(script.status).toBe(200);
+		expect(script.headers.get("content-type")).toContain("javascript");
+		await script.body?.cancel();
 
 		// Compose versions that do not fail for an unpublished port print an empty address.
 		expect(await publishedPostgresPort(project)).toMatch(
@@ -245,12 +260,25 @@ test("REQ-011 AC-37 starts the server and Postgres from the compose file with no
 		const credential = await issueToken(project);
 		await expectAuthenticated(baseUrl, credential);
 		expect(await journalCount(project)).toBeGreaterThanOrEqual(1);
+		expect(
+			await query(project, "select to_regnamespace('pgboss') is not null"),
+		).toBe("t");
 
 		const password = await passwordDigest(project);
 		await withCompose(async (other) => {
 			await other.compose(["up", "-d", "--wait", "postgres"]);
 			expect((await passwordDigest(other)) === password).toBe(false);
 		});
+
+		const container = await serverContainer(project);
+		await project.compose(["stop", "server"]);
+		const exitCode = await docker([
+			"inspect",
+			"--format",
+			"{{.State.ExitCode}}",
+			container,
+		]);
+		expect(exitCode.trim()).toBe("0");
 
 		await project.compose(["down"]);
 		await project.compose(["up", "-d", "--wait"]);
@@ -270,9 +298,9 @@ test("REQ-011 AC-38 updates by pull and up, applies the pending migration and ke
 				await expectAuthenticated(await project.waitHealthy(), credential);
 				const applied = await journalCount(project);
 				const baseline = await serverImage(project);
-				expect(baseline.reference).toBe(BASELINE_IMAGE);
+				expect(baseline.reference).toBe(project.image);
 
-				await buildUpdateImage(updateImage);
+				await buildUpdateImage(updateImage, project.image);
 				await docker(["push", updateImage]);
 				await docker(["image", "rm", updateImage]);
 				expect(await isLocalImage(updateImage)).toBe(false);
@@ -299,9 +327,7 @@ test("REQ-011 AC-38 updates by pull and up, applies the pending migration and ke
 			});
 		} finally {
 			// After the project is down, so no container holds the image.
-			if (await isLocalImage(updateImage)) {
-				await docker(["image", "rm", updateImage]);
-			}
+			await removeImage(updateImage);
 		}
 	});
 });

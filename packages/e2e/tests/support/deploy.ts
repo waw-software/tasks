@@ -1,5 +1,8 @@
 import { execFile } from "node:child_process";
 import { randomBytes } from "node:crypto";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import { freePort } from "./server.ts";
@@ -36,6 +39,18 @@ export function docker(
 	});
 }
 
+/** `docker image rm -f <reference>`; an image that does not exist is not an error. */
+export async function removeImage(reference: string): Promise<void> {
+	try {
+		await docker(["image", "rm", "--force", reference]);
+	} catch (error) {
+		// Some Docker versions fail for a missing image even with --force.
+		if (!/no such image/i.test(String(error))) {
+			throw error;
+		}
+	}
+}
+
 /** Polls GET `url` until it answers 200; rejects after timeoutMs. */
 export async function waitForOk(url: string, timeoutMs: number): Promise<void> {
 	const deadline = Date.now() + timeoutMs;
@@ -61,7 +76,9 @@ export interface ComposeProject {
 	name: string;
 	env: NodeJS.ProcessEnv;
 	port: number;
-	/** docker compose -f <repo>/docker-compose.yml -p <name> <args> */
+	/** The server image tag of this project alone, in WAW_SERVER_IMAGE. */
+	image: string;
+	/** docker compose -f <repo>/docker-compose.yml -p <name> --env-file <empty file> <args> */
 	compose(
 		args: readonly string[],
 		extraEnv?: NodeJS.ProcessEnv,
@@ -70,25 +87,49 @@ export interface ComposeProject {
 	waitHealthy(timeoutMs?: number): Promise<string>;
 }
 
-/** Unique project name waw-e2e-<hex>, a free host port in WAW_PORT; always `down -v --remove-orphans` in finally. */
+/**
+ * Unique project name waw-e2e-<hex> and server image tag, a free host port in WAW_PORT; in finally
+ * always `down -v --remove-orphans`, then the image is removed.
+ */
 export async function withCompose<T>(
 	run: (project: ComposeProject) => Promise<T>,
 ): Promise<T> {
-	const name = `waw-e2e-${randomBytes(6).toString("hex")}`;
+	const id = randomBytes(6).toString("hex");
+	const name = `waw-e2e-${id}`;
+	// A deployment on the same engine keeps its own image.
+	const image = `localhost/waw-tasks-server:e2e-${id}`;
 	const port = await freePort();
-	const env: NodeJS.ProcessEnv = { ...process.env, WAW_PORT: String(port) };
-	// The specs prove the compose file as delivered: no setting of the caller reaches it.
-	delete env.WAW_SERVER_IMAGE;
+	const env: NodeJS.ProcessEnv = {
+		...process.env,
+		WAW_PORT: String(port),
+		WAW_SERVER_IMAGE: image,
+	};
+	// The specs prove the compose file as delivered: no setting of the caller reaches it,
+	// neither from the environment nor from a .env file in the checkout.
 	delete env.PUBLIC_URL;
+	const envDir = await mkdtemp(join(tmpdir(), "waw-e2e-env-"));
+	const envFile = join(envDir, "empty.env");
+	await writeFile(envFile, "");
 
 	const project: ComposeProject = {
 		name,
 		env,
 		port,
+		image,
 		compose: (args, extraEnv) =>
-			docker(["compose", "-f", composeFile, "-p", name, ...args], {
-				env: { ...env, ...extraEnv },
-			}),
+			docker(
+				[
+					"compose",
+					"-f",
+					composeFile,
+					"-p",
+					name,
+					"--env-file",
+					envFile,
+					...args,
+				],
+				{ env: { ...env, ...extraEnv } },
+			),
 		async waitHealthy(timeoutMs = 120_000) {
 			const baseUrl = `http://127.0.0.1:${port}`;
 			await waitForOk(`${baseUrl}/health`, timeoutMs);
@@ -99,6 +140,11 @@ export async function withCompose<T>(
 	try {
 		return await run(project);
 	} finally {
-		await project.compose(["down", "-v", "--remove-orphans"]);
+		try {
+			await project.compose(["down", "-v", "--remove-orphans"]);
+		} finally {
+			await removeImage(image);
+			await rm(envDir, { recursive: true, force: true });
+		}
 	}
 }
