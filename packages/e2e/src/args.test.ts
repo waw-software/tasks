@@ -174,6 +174,12 @@ describe("parseArgs", () => {
 		expect(needs("gallery-navigation.web-390")).toBe(true);
 		expect(needs("gallery-navigation.electron")).toBe(true);
 		expect(needs("gallery-navigation.ios")).toBe(false);
+		expect(needs("gallery-overlays.web-390")).toBe(true);
+		expect(needs("gallery-overlays.electron")).toBe(true);
+		expect(needs("gallery-overlays.ios")).toBe(false);
+		expect(needs("gallery-overlays-quick-add.web-390")).toBe(true);
+		expect(needs("gallery-overlays-quick-add.electron")).toBe(true);
+		expect(needs("gallery-overlays-quick-add.ios")).toBe(false);
 		expect(
 			needsGalleryBuild([
 				{
@@ -216,12 +222,24 @@ describe("manifest", () => {
 			"gallery-navigation.web-1440",
 			"gallery-navigation.electron",
 			"gallery-navigation.ios",
+			"gallery-overlays.web-390",
+			"gallery-overlays.web-1440",
+			"gallery-overlays.electron",
+			"gallery-overlays.ios",
+			"gallery-overlays-quick-add.web-390",
+			"gallery-overlays-quick-add.web-1440",
+			"gallery-overlays-quick-add.electron",
+			"gallery-overlays-quick-add.ios",
 		]);
-		expect(new Set(realScreens.map((s) => s.id)).size).toBe(24);
+		expect(new Set(realScreens.map((s) => s.id)).size).toBe(32);
 		const viewports = realScreens.flatMap((s) =>
 			s.surface === "web" ? [s.viewport] : [],
 		);
 		expect(viewports).toEqual([
+			{ width: 390, height: 844 },
+			{ width: 1440, height: 900 },
+			{ width: 390, height: 844 },
+			{ width: 1440, height: 900 },
 			{ width: 390, height: 844 },
 			{ width: 1440, height: 900 },
 			{ width: 390, height: 844 },
@@ -259,6 +277,24 @@ describe("manifest", () => {
 			["gallery-navigation.web-390", "/#/gallery/navigation", "Navigation"],
 			["gallery-navigation.web-1440", "/#/gallery/navigation", "Navigation"],
 			["gallery-navigation.electron", "#/gallery/navigation", "Navigation"],
+			["gallery-overlays.web-390", "/#/gallery/overlays", "Overlays"],
+			["gallery-overlays.web-1440", "/#/gallery/overlays", "Overlays"],
+			["gallery-overlays.electron", "#/gallery/overlays", "Overlays"],
+			[
+				"gallery-overlays-quick-add.web-390",
+				"/#/gallery/overlays/quick-add",
+				"New task",
+			],
+			[
+				"gallery-overlays-quick-add.web-1440",
+				"/#/gallery/overlays/quick-add",
+				"New task",
+			],
+			[
+				"gallery-overlays-quick-add.electron",
+				"#/gallery/overlays/quick-add",
+				"New task",
+			],
 		]);
 		expect(realScreens.every((s) => s.mockup === null)).toBe(true);
 	});

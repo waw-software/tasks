@@ -14,6 +14,8 @@ const rowsUrl = "exp://127.0.0.1:8081/--/gallery/rows";
 const controlsUrl = "exp://127.0.0.1:8081/--/gallery/controls";
 const pickersUrl = "exp://127.0.0.1:8081/--/gallery/pickers";
 const navigationUrl = "exp://127.0.0.1:8081/--/gallery/navigation";
+const overlaysUrl = "exp://127.0.0.1:8081/--/gallery/overlays";
+const quickAddUrl = "exp://127.0.0.1:8081/--/gallery/overlays/quick-add";
 
 describe("App", () => {
 	beforeEach(() => {
@@ -359,6 +361,119 @@ describe("App", () => {
 			"exp://127.0.0.1:8081/--/gallery/navigationx",
 			"exp://127.0.0.1:8081/--/gallery/navigation/more",
 			"exp://127.0.0.1:8081/?next=/--/gallery/navigation",
+		]) {
+			expect(galleryRoute(url)).toBeNull();
+		}
+	});
+
+	it("REQ-001 AC-04: Overlays opens from the gallery or a dev link and Back returns", async () => {
+		const overlays = () => screen.queryByRole("header", { name: "Overlays" });
+		const sheet = () => screen.queryByRole("header", { name: "New task" });
+		const back = () =>
+			fireEvent.press(screen.getByRole("button", { name: "Back" }));
+		const cancel = () =>
+			fireEvent.press(screen.getByRole("button", { name: "Cancel" }));
+		const expectGallery = () =>
+			expect(
+				screen.getByRole("header", { name: "Component gallery" }),
+			).toBeOnTheScreen();
+		const shell = await render(<App />);
+		await fireEvent.press(
+			screen.getByRole("button", { name: "Component gallery" }),
+		);
+
+		await fireEvent.press(screen.getByRole("button", { name: "Overlays" }));
+
+		expect(overlays()).toBeOnTheScreen();
+		expect(sheet()).toBeNull();
+
+		await back();
+
+		expectGallery();
+
+		await shell.unmount();
+		jest.spyOn(Linking, "getInitialURL").mockResolvedValue(overlaysUrl);
+		const hub = await render(<App />);
+
+		expect(
+			await screen.findByRole("header", { name: "Overlays" }),
+		).toBeOnTheScreen();
+		expect(sheet()).toBeNull();
+
+		await back();
+
+		expectGallery();
+
+		await hub.unmount();
+		jest.spyOn(Linking, "getInitialURL").mockResolvedValue(quickAddUrl);
+		const direct = await render(<App />);
+
+		expect(
+			await screen.findByRole("header", { name: "New task" }),
+		).toBeOnTheScreen();
+
+		await cancel();
+
+		expect(sheet()).toBeNull();
+		expect(overlays()).toBeOnTheScreen();
+
+		await back();
+
+		expectGallery();
+
+		await direct.unmount();
+		const globals = globalThis as unknown as { __DEV__: boolean };
+		const wasDev = globals.__DEV__;
+		globals.__DEV__ = false;
+		try {
+			const release = await render(<App />);
+
+			expect(
+				screen.getByRole("header", { name: "WAW Tasks" }),
+			).toBeOnTheScreen();
+			expect(overlays()).toBeNull();
+			expect(sheet()).toBeNull();
+			await release.unmount();
+		} finally {
+			globals.__DEV__ = wasDev;
+		}
+
+		jest.spyOn(Linking, "getInitialURL").mockResolvedValue(null);
+		const listen = jest.spyOn(Linking, "addEventListener");
+		await render(<App />);
+		const onUrl = listen.mock.lastCall?.[1];
+		if (!onUrl) {
+			throw new Error("the app does not listen for links");
+		}
+
+		await act(() => onUrl({ url: overlaysUrl }));
+
+		expect(overlays()).toBeOnTheScreen();
+		expect(sheet()).toBeNull();
+
+		await act(() => onUrl({ url: quickAddUrl }));
+
+		expect(sheet()).toBeOnTheScreen();
+
+		await cancel();
+		await act(() => onUrl({ url: quickAddUrl }));
+
+		expect(sheet()).toBeOnTheScreen();
+
+		await act(() => onUrl({ url: overlaysUrl }));
+
+		expect(sheet()).toBeNull();
+		expect(overlays()).toBeOnTheScreen();
+
+		expect(galleryRoute(overlaysUrl)).toBe("overlays");
+		expect(galleryRoute(quickAddUrl)).toBe("overlays-quick-add");
+		for (const url of [
+			"exp://127.0.0.1:8081/--/gallery/overlaysx",
+			"exp://127.0.0.1:8081/--/gallery/overlays/more",
+			"exp://127.0.0.1:8081/--/gallery/overlays/quick-addx",
+			"exp://127.0.0.1:8081/--/gallery/overlays/quick-add/more",
+			"exp://127.0.0.1:8081/?next=/--/gallery/overlays",
+			"exp://127.0.0.1:8081/?next=/--/gallery/overlays/quick-add",
 		]) {
 			expect(galleryRoute(url)).toBeNull();
 		}

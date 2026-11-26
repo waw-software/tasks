@@ -1,0 +1,22 @@
+/* Colours live here, not inline, so that the state rules can override them. */
+.waw-detail-close {
+	background-color: var(--waw-bg);
+	color: var(--waw-ink);
+	border: 0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+	.waw-detail-close:hover {
+		background-color: var(--waw-bg-hover);
+	}
+}
+
+/* After hover, so that pressed wins. */
+.waw-detail-close:active {
+	background-color: var(--waw-bg-active);
+}
+
+.waw-detail-close:focus-visible {
+	outline: var(--waw-focus-width) solid var(--waw-focus);
+	outline-offset: var(--waw-focus-offset);
+}

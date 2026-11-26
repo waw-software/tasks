@@ -5,10 +5,22 @@ import {
 	render,
 	screen,
 } from "@testing-library/react";
-import { afterEach, expect, test, vi } from "vitest";
+import { afterEach, beforeAll, expect, test, vi } from "vitest";
 import App from "./App.tsx";
 
+// jsdom has no modal dialog methods.
+beforeAll(() => {
+	HTMLDialogElement.prototype.showModal = function showModal() {
+		this.setAttribute("open", "");
+	};
+	HTMLDialogElement.prototype.close = function close() {
+		this.removeAttribute("open");
+		this.dispatchEvent(new Event("close"));
+	};
+});
+
 afterEach(() => {
+	vi.unstubAllGlobals();
 	vi.unstubAllEnvs();
 	window.location.hash = "";
 	cleanup();
@@ -186,4 +198,53 @@ test("REQ-001 AC-03: a dev build opens #/gallery/controls directly", () => {
 	render(<App />);
 
 	expect(levelOneHeading()).toBe("Controls");
+});
+
+test("REQ-001 AC-03: Overlays and its quick-add route open only in a gallery build", async () => {
+	vi.stubGlobal("matchMedia", (query: string) => ({
+		matches: 1440 < Number(/\d+/.exec(query)?.[0]),
+		addEventListener: () => {},
+		removeEventListener: () => {},
+	}));
+	vi.stubEnv("DEV", false);
+	vi.stubEnv("VITE_WAW_GALLERY", undefined);
+	for (const hash of ["#/gallery/overlays", "#/gallery/overlays/quick-add"]) {
+		window.location.hash = hash;
+		render(<App />);
+		expect(levelOneHeading()).toBe("WAW Tasks");
+		expect(screen.queryByRole("dialog")).toBeNull();
+		cleanup();
+	}
+
+	vi.stubEnv("VITE_WAW_GALLERY", "1");
+	window.location.hash = "#/gallery/overlays";
+	render(<App />);
+	expect(levelOneHeading()).toBe("Overlays");
+	expect(screen.queryByRole("dialog")).toBeNull();
+	cleanup();
+
+	window.location.hash = "#/gallery/overlays/quick-add";
+	render(<App />);
+	expect(screen.getByRole("dialog", { name: "New task" })).toBeDefined();
+	cleanup();
+
+	window.location.hash = "";
+	render(<App />);
+	expect(levelOneHeading()).toBe("WAW Tasks");
+
+	changeHash("#/gallery");
+	await followLink("Overlays", "Overlays");
+	await followLink("Back", "Component gallery");
+
+	// A change of route between the two pages opens and drops the overlay.
+	changeHash("#/gallery/overlays");
+	changeHash("#/gallery/overlays/quick-add");
+	expect(screen.getByRole("dialog", { name: "New task" })).toBeDefined();
+	changeHash("#/gallery/overlays");
+	expect(screen.queryByRole("dialog")).toBeNull();
+
+	for (const hash of ["#/gallery/overlaysx", "#/gallery/overlays/quick-addx"]) {
+		changeHash(hash);
+		expect(levelOneHeading()).toBe("WAW Tasks");
+	}
 });

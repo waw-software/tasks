@@ -96,6 +96,7 @@ test("DESIGN §2 type roles, fonts and weights", () => {
 		taskTitleLineHeight: 22,
 		controlSupport: 14,
 		sidebarWordmark: 17,
+		detailTitle: 24,
 	});
 });
 
@@ -152,6 +153,13 @@ test("DESIGN §2–3 radii, spacing and sizes", () => {
 		sidebarRowGap: 2,
 		sidebarRowInline: 10,
 		sidebarChipGap: 6,
+		dialogInset: 24,
+		dialogPadding: 24,
+		overlayGap: 16,
+		sheetPadding: 20,
+		sheetBottom: 28,
+		detailPadding: 28,
+		detailBottom: 32,
 	});
 	expect(theme.size).toEqual({
 		touchTarget: 44,
@@ -183,5 +191,15 @@ test("DESIGN §2–3 radii, spacing and sizes", () => {
 		sidebarWordmarkMark: 30,
 		sidebarWordmarkIcon: 16,
 		serverStatusDot: 8,
+		detailPreferred: 380,
+		dialogMax: 600,
+		sheetMaxHeightPercent: 92,
+	});
+});
+
+test("DESIGN §3 overlay scrim and dialog shadow", () => {
+	expect(theme.overlay).toEqual({
+		scrim: "rgba(23,23,23,0.45)",
+		dialogShadow: "0 24px 60px rgba(0,0,0,0.25)",
 	});
 });
