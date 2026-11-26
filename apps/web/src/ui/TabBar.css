@@ -1,0 +1,26 @@
+/* Colours live here, not inline, so that the state rules can override them. */
+.waw-tab,
+.waw-fab {
+	background-color: var(--waw-bg);
+	color: var(--waw-ink);
+	border: 0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+	.waw-tab:not([aria-current]):hover,
+	.waw-fab:hover {
+		background-color: var(--waw-bg-hover);
+	}
+}
+
+/* After hover, so that pressed wins. */
+.waw-tab:active,
+.waw-fab:active {
+	background-color: var(--waw-bg-active);
+}
+
+.waw-tab:focus-visible,
+.waw-fab:focus-visible {
+	outline: var(--waw-focus-width) solid var(--waw-focus);
+	outline-offset: var(--waw-focus-offset);
+}

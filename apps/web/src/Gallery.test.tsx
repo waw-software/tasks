@@ -5,10 +5,11 @@ import {
 	screen,
 	within,
 } from "@testing-library/react";
-import { afterEach, expect, test } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
 import Gallery from "./Gallery.tsx";
 
 afterEach(() => {
+	vi.unstubAllGlobals();
 	cleanup();
 });
 
@@ -301,4 +302,110 @@ test("REQ-003 AC-14: a specific-time reminder is added once and kept with the ot
 	expect(checkbox("At 10:00").checked).toBe(true);
 	expect(checkbox("At the time of the task").checked).toBe(true);
 	expect(checkbox("1 day before").checked).toBe(true);
+});
+
+// Answers the "(width < Npx)" queries as a viewport of the given width would.
+function stubViewport(width: number) {
+	vi.stubGlobal("matchMedia", (query: string) => ({
+		matches: width < Number(/\d+/.exec(query)?.[0]),
+		addEventListener: () => {},
+		removeEventListener: () => {},
+	}));
+}
+
+function heading(level: 1 | 2, name: string) {
+	return screen.getByRole("heading", { level, name });
+}
+
+test("REQ-004: narrow navigation shows the tab bar and Add only on Today", () => {
+	stubViewport(390);
+	render(<Gallery section="navigation" />);
+
+	expect(heading(1, "Navigation")).toBeDefined();
+	expect(screen.getByRole("link", { name: "Back" }).getAttribute("href")).toBe(
+		"#/gallery",
+	);
+	expect(screen.queryByRole("complementary")).toBeNull();
+	expect(screen.getByRole("navigation", { name: "Main" })).toBeDefined();
+	expect(heading(2, "Today")).toBeDefined();
+	for (const line of [
+		"Sun 22 Nov · 5 tasks left",
+		"2 of 7 done",
+		"Send the invoice to the client",
+		"Pay rent",
+		"Review the pull request",
+	]) {
+		expect(screen.getByText(line)).toBeDefined();
+	}
+	expect(screen.queryByText("Selected: Add task")).toBeNull();
+	press("Add task");
+	expect(screen.getByText("Selected: Add task")).toBeDefined();
+
+	press("Browse");
+
+	expect(heading(2, "Browse")).toBeDefined();
+	expect(screen.getByText("Inbox")).toBeDefined();
+	expect(screen.getByText("home-server · synced")).toBeDefined();
+	expect(screen.queryByText("Pay rent")).toBeNull();
+	expect(screen.queryByRole("button", { name: "Add task" })).toBeNull();
+
+	for (const name of ["Upcoming", "Search"]) {
+		press(name);
+		expect(heading(2, name)).toBeDefined();
+		expect(screen.queryByRole("button", { name: "Add task" })).toBeNull();
+	}
+
+	press("Today");
+
+	expect(heading(2, "Today")).toBeDefined();
+	expect(screen.getByRole("button", { name: "Add task" })).toBeDefined();
+});
+
+test("REQ-004 AC-20 presentation: wide navigation shows the sidebar", () => {
+	stubViewport(1440);
+	render(<Gallery section="navigation" />);
+
+	expect(heading(1, "Navigation")).toBeDefined();
+	expect(screen.getByRole("link", { name: "Back" }).getAttribute("href")).toBe(
+		"#/gallery",
+	);
+	expect(screen.queryByRole("navigation", { name: "Main" })).toBeNull();
+	const sidebar = within(screen.getByRole("complementary"));
+	for (const name of [
+		"Inbox, 3 tasks",
+		"Today, 5 tasks",
+		"Upcoming",
+		"Home, 5 tasks",
+		"Work, 9 tasks",
+		"Personal, 4 tasks",
+		"@money",
+		"@calls",
+		"@waiting",
+		"@errands",
+		"Priority 1, 3 tasks",
+		"This week at work, 5 tasks",
+	]) {
+		expect(sidebar.getByRole("link", { name }).getAttribute("href")).toBe(
+			"#/gallery/navigation",
+		);
+	}
+	expect(sidebar.getByText("home-server · synced")).toBeDefined();
+	expect(
+		sidebar
+			.getByRole("link", { name: "Today, 5 tasks" })
+			.getAttribute("aria-current"),
+	).toBe("page");
+	expect(heading(2, "Today")).toBeDefined();
+
+	fireEvent.click(sidebar.getByRole("link", { name: "Home, 5 tasks" }));
+
+	expect(heading(2, "Home")).toBeDefined();
+	expect(
+		sidebar
+			.getByRole("link", { name: "Home, 5 tasks" })
+			.getAttribute("aria-current"),
+	).toBe("page");
+
+	press("Add task");
+	expect(screen.getByText("Selected: Add task")).toBeDefined();
 });

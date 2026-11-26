@@ -24,12 +24,15 @@ export function galleryRoute(url: string | null): GallerySection | null {
 	if (path.endsWith("/--/gallery/controls")) {
 		return "controls";
 	}
-	return path.endsWith("/--/gallery/pickers") ? "pickers" : null;
+	if (path.endsWith("/--/gallery/pickers")) {
+		return "pickers";
+	}
+	return path.endsWith("/--/gallery/navigation") ? "navigation" : null;
 }
 
 export default function App() {
 	const [screen, setScreen] = useState<
-		"shell" | "gallery" | "rows" | "controls" | "pickers"
+		"shell" | "gallery" | Exclude<GallerySection, "components">
 	>("shell");
 	const [fontsLoaded, fontError] = useAppFonts();
 
@@ -71,6 +74,7 @@ export default function App() {
 					onOpenRows={() => setScreen("rows")}
 					onOpenControls={() => setScreen("controls")}
 					onOpenPickers={() => setScreen("pickers")}
+					onOpenNavigation={() => setScreen("navigation")}
 				/>
 				<StatusBar style="auto" />
 			</>

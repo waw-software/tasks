@@ -1,0 +1,19 @@
+/* Colours live here, not inline, so that the state rules can override them. */
+.waw-sidebar-link {
+	background-color: var(--waw-bg);
+}
+
+@media (hover: hover) and (pointer: fine) {
+	.waw-sidebar-link:not([aria-current]):hover {
+		background-color: var(--waw-bg-hover);
+	}
+}
+
+.waw-sidebar-link:active {
+	box-shadow: inset 0 0 0 var(--waw-border) var(--waw-press);
+}
+
+.waw-sidebar-link:focus-visible {
+	outline: var(--waw-focus-width) solid var(--waw-focus);
+	outline-offset: var(--waw-focus-offset);
+}

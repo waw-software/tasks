@@ -13,6 +13,7 @@ const galleryUrl = "exp://127.0.0.1:8081/--/gallery";
 const rowsUrl = "exp://127.0.0.1:8081/--/gallery/rows";
 const controlsUrl = "exp://127.0.0.1:8081/--/gallery/controls";
 const pickersUrl = "exp://127.0.0.1:8081/--/gallery/pickers";
+const navigationUrl = "exp://127.0.0.1:8081/--/gallery/navigation";
 
 describe("App", () => {
 	beforeEach(() => {
@@ -286,6 +287,78 @@ describe("App", () => {
 			"exp://127.0.0.1:8081/--/gallery/pickersx",
 			"exp://127.0.0.1:8081/--/gallery/pickers/more",
 			"exp://127.0.0.1:8081/?next=/--/gallery/pickers",
+		]) {
+			expect(galleryRoute(url)).toBeNull();
+		}
+	});
+
+	it("REQ-001 AC-04: Navigation opens from the gallery or a dev link and Back returns", async () => {
+		const shell = await render(<App />);
+		await fireEvent.press(
+			screen.getByRole("button", { name: "Component gallery" }),
+		);
+
+		await fireEvent.press(screen.getByRole("button", { name: "Navigation" }));
+
+		expect(
+			screen.getByRole("header", { name: "Navigation" }),
+		).toBeOnTheScreen();
+
+		await fireEvent.press(screen.getByRole("button", { name: "Back" }));
+
+		expect(
+			screen.getByRole("header", { name: "Component gallery" }),
+		).toBeOnTheScreen();
+
+		await shell.unmount();
+		jest.spyOn(Linking, "getInitialURL").mockResolvedValue(navigationUrl);
+		const dev = await render(<App />);
+
+		expect(
+			await screen.findByRole("header", { name: "Navigation" }),
+		).toBeOnTheScreen();
+
+		await fireEvent.press(screen.getByRole("button", { name: "Back" }));
+
+		expect(
+			screen.getByRole("header", { name: "Component gallery" }),
+		).toBeOnTheScreen();
+
+		await dev.unmount();
+		const globals = globalThis as unknown as { __DEV__: boolean };
+		const wasDev = globals.__DEV__;
+		globals.__DEV__ = false;
+		try {
+			const release = await render(<App />);
+
+			expect(
+				screen.getByRole("header", { name: "WAW Tasks" }),
+			).toBeOnTheScreen();
+			expect(screen.queryByRole("header", { name: "Navigation" })).toBeNull();
+			await release.unmount();
+		} finally {
+			globals.__DEV__ = wasDev;
+		}
+
+		jest.spyOn(Linking, "getInitialURL").mockResolvedValue(null);
+		const listen = jest.spyOn(Linking, "addEventListener");
+		await render(<App />);
+		const onUrl = listen.mock.lastCall?.[1];
+		if (!onUrl) {
+			throw new Error("the app does not listen for links");
+		}
+
+		await act(() => onUrl({ url: navigationUrl }));
+
+		expect(
+			screen.getByRole("header", { name: "Navigation" }),
+		).toBeOnTheScreen();
+
+		expect(galleryRoute(navigationUrl)).toBe("navigation");
+		for (const url of [
+			"exp://127.0.0.1:8081/--/gallery/navigationx",
+			"exp://127.0.0.1:8081/--/gallery/navigation/more",
+			"exp://127.0.0.1:8081/?next=/--/gallery/navigation",
 		]) {
 			expect(galleryRoute(url)).toBeNull();
 		}
