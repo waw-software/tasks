@@ -1,12 +1,9 @@
-import {
-	DEVICE_TOKEN_PATTERN,
-	SESSION_COOKIE,
-	type SessionForbidden,
-} from "@waw/api-contract";
+import { SESSION_COOKIE, type SessionForbidden } from "@waw/api-contract";
 import type { FastifyRequest } from "fastify";
 import { isLoopbackHost, resolvePublicUrl } from "../public-url.ts";
 
-const DEVICE_TOKEN = new RegExp(DEVICE_TOKEN_PATTERN);
+// Only a session token works as a cookie, and it works nowhere else.
+const SESSION_TOKEN = /^waw_ses_[A-Za-z0-9_-]{43}$/;
 // 400 days, the longest lifetime browsers keep.
 const MAX_AGE_SECONDS = 34_560_000;
 
@@ -29,7 +26,7 @@ export function hasSessionCookie(header: string | undefined): boolean {
 export function readSessionCookie(header: string | undefined): string | null {
 	const [value, ...others] = sessionValues(header);
 	if (value === undefined || others.length > 0) return null;
-	return DEVICE_TOKEN.test(value) ? value : null;
+	return SESSION_TOKEN.test(value) ? value : null;
 }
 
 /** The Set-Cookie value that stores the token, or clears the cookie for null. */

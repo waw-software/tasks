@@ -7,8 +7,9 @@ import { sessionRequestError } from "../src/auth/session-cookie.js";
 import { publicAddressTrustProxy } from "../src/public-url.js";
 
 const deviceId = "3f1c2a9e-5b7d-4c1a-9e2f-8a6b4d0c7e15";
-const token = `waw_dev_${"A".repeat(43)}`;
-const otherToken = `waw_dev_${"B".repeat(43)}`;
+const token = `waw_ses_${"A".repeat(43)}`;
+const otherToken = `waw_ses_${"B".repeat(43)}`;
+const deviceToken = `waw_dev_${"C".repeat(43)}`;
 const cookie = `waw_session=${token}`;
 const loopbackHost = "127.0.0.1:3000";
 
@@ -100,7 +101,7 @@ describe("session cookie auth", () => {
 
 		const bearer = await getCurrent(target, {
 			cookie,
-			authorization: `Bearer ${token}`,
+			authorization: `Bearer ${deviceToken}`,
 		});
 
 		expect(bearer.statusCode).toBe(200);
@@ -128,6 +129,21 @@ describe("session cookie auth", () => {
 			expect(counts.lookups).toBe(lookups);
 		},
 	);
+
+	it("REQ-007 AC-28 a device token in the cookie is refused", async () => {
+		const { db, counts } = fakeDb();
+
+		const res = await getCurrent(await start(db), {
+			cookie: `waw_session=${deviceToken}`,
+		});
+
+		expect(res.statusCode).toBe(401);
+		expect(res.json()).toEqual({ error: "unauthorized" });
+		expect(res.headers["set-cookie"]).toBe(
+			"waw_session=; Path=/; Max-Age=0; HttpOnly; SameSite=Strict",
+		);
+		expect(counts.lookups).toBe(0);
+	});
 
 	it("REQ-007 AC-28 a cookie over remote http is refused", async () => {
 		const { db, counts } = fakeDb();

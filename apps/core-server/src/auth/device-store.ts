@@ -25,16 +25,33 @@ function hideQuery(error: unknown): never {
 	throw new Error(`device token query failed${suffix}`);
 }
 
-export async function issueDeviceToken(
+async function issueToken(
 	db: Pick<AppDb, "insert">,
-): Promise<DeviceCredential> {
+	prefix: "waw_dev_" | "waw_ses_",
+): Promise<{ id: string; token: string }> {
 	const id = randomUUID();
-	const token = `waw_dev_${randomBytes(32).toString("base64url")}`;
+	const token = `${prefix}${randomBytes(32).toString("base64url")}`;
 	await db
 		.insert(deviceTokens)
 		.values({ id, tokenHash: hashDeviceToken(token) })
 		.catch(hideQuery);
 	return { id, token };
+}
+
+export function issueDeviceToken(
+	db: Pick<AppDb, "insert">,
+): Promise<DeviceCredential> {
+	return issueToken(db, "waw_dev_");
+}
+
+/**
+ * The token of a browser session. It is a device like any other, but its prefix keeps
+ * Bearer routes from accepting it: a cookie also reaches other ports of its host.
+ */
+export function issueSessionToken(
+	db: Pick<AppDb, "insert">,
+): Promise<{ id: string; token: string }> {
+	return issueToken(db, "waw_ses_");
 }
 
 export async function findDeviceToken(

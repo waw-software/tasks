@@ -3,14 +3,15 @@ import { PgDialect } from "drizzle-orm/pg-core";
 import Fastify, { type FastifyInstance } from "fastify";
 import { afterEach, describe, expect, it } from "vitest";
 import { app } from "../src/app.js";
+import { loggerOptions } from "../src/auth/device-auth.js";
 import { type AppDb, hashDeviceToken } from "../src/auth/device-store.js";
 import { publicAddressTrustProxy } from "../src/public-url.js";
 
 const ownerId = "3f1c2a9e-5b7d-4c1a-9e2f-8a6b4d0c7e15";
 const browserId = "9b2e4d71-0c3a-4f58-8d16-2a7c5e9b1f04";
 const ownerToken = `waw_dev_${"A".repeat(43)}`;
-const browserToken = `waw_dev_${"B".repeat(43)}`;
-const revokedToken = `waw_dev_${"C".repeat(43)}`;
+const browserToken = `waw_ses_${"B".repeat(43)}`;
+const revokedToken = `waw_ses_${"C".repeat(43)}`;
 const cookie = `waw_session=${browserToken}`;
 const loopbackHost = "127.0.0.1:3000";
 const origin = `http://${loopbackHost}`;
@@ -31,6 +32,7 @@ function fakeDb(options: { failRevoke?: boolean } = {}) {
 	]);
 	const inserts: Inserted[] = [];
 	const revocations: string[] = [];
+	const lookups: string[] = [];
 
 	const db = {
 		select: () => ({
@@ -38,6 +40,7 @@ function fakeDb(options: { failRevoke?: boolean } = {}) {
 				where: (condition: SQL) => ({
 					limit: async () => {
 						const [digest] = params(condition);
+						lookups.push(digest as string);
 						const id = active.get(digest as string);
 						return id ? [{ id }] : [];
 					},
@@ -47,6 +50,8 @@ function fakeDb(options: { failRevoke?: boolean } = {}) {
 		insert: () => ({
 			values: async (row: Inserted) => {
 				inserts.push(row);
+				// An issued token is live, so a later request can use it.
+				active.set(row.tokenHash, row.id);
 			},
 		}),
 		update: () => ({
@@ -62,7 +67,7 @@ function fakeDb(options: { failRevoke?: boolean } = {}) {
 			}),
 		}),
 	};
-	return { db: db as unknown as AppDb, inserts, revocations };
+	return { db: db as unknown as AppDb, inserts, revocations, lookups };
 }
 
 describe("browser session", () => {
@@ -108,7 +113,7 @@ describe("browser session", () => {
 		expect(res.headers["cache-control"]).toBe("no-store");
 		const header = String(res.headers["set-cookie"]);
 		const parts =
-			/^waw_session=(waw_dev_[A-Za-z0-9_-]{43}); Path=\/; Max-Age=34560000; HttpOnly; SameSite=Strict$/.exec(
+			/^waw_session=(waw_ses_[A-Za-z0-9_-]{43}); Path=\/; Max-Age=34560000; HttpOnly; SameSite=Strict$/.exec(
 				header,
 			);
 		const issued = parts?.[1] ?? "";
@@ -119,7 +124,7 @@ describe("browser session", () => {
 		]);
 		expect(res.json()).toEqual({ id: inserts[0]?.id });
 		expect(inserts[0]?.id).not.toBe(ownerId);
-		expect(res.body).not.toContain("waw_dev_");
+		expect(res.body).not.toContain("waw_ses_");
 	});
 
 	it("REQ-007 AC-28 marks the cookie Secure behind a trusted https proxy", async () => {
@@ -134,6 +139,67 @@ describe("browser session", () => {
 
 		expect(res.statusCode).toBe(201);
 		expect(res.headers["set-cookie"]).toMatch(/; SameSite=Strict; Secure$/);
+	});
+
+	it("REQ-007 AC-28 the browser session token is refused as a Bearer token", async () => {
+		const { db, inserts, lookups } = fakeDb();
+		const target = await start(db);
+		const login = await session(target, "POST", bearer);
+		const issued =
+			/^waw_session=([^;]+)/.exec(String(login.headers["set-cookie"]))?.[1] ??
+			"";
+		expect(issued).not.toBe("");
+		const lookupsAfterLogin = lookups.length;
+
+		for (const [method, url] of [
+			["POST", "/tokens"],
+			["POST", "/tokens/pairing"],
+			["GET", "/tokens/current"],
+		] as const) {
+			const res = await target.inject({
+				method,
+				url,
+				headers: { host: loopbackHost, authorization: `Bearer ${issued}` },
+			});
+
+			expect(res.statusCode, `${method} ${url}`).toBe(401);
+		}
+		// Only the login inserted, and no refused request reached the database.
+		expect(inserts).toHaveLength(1);
+		expect(lookups).toHaveLength(lookupsAfterLogin);
+	});
+
+	it("REQ-007 AC-28 session issuance and sign-out never reach the log", async () => {
+		let log = "";
+		const { db, revocations } = fakeDb();
+		server = Fastify({
+			logger: {
+				...loggerOptions,
+				stream: {
+					write: (line: string) => {
+						log += line;
+					},
+				},
+			},
+		});
+		await server.register(app, { db });
+
+		const login = await session(server, "POST", bearer);
+		const issued =
+			/^waw_session=([^;]+)/.exec(String(login.headers["set-cookie"]))?.[1] ??
+			"";
+		const logout = await session(server, "DELETE", {
+			cookie: `waw_session=${issued}`,
+		});
+
+		expect(login.statusCode).toBe(201);
+		expect(issued).not.toBe("");
+		expect(logout.statusCode).toBe(204);
+		expect(revocations).toEqual([login.json().id]);
+		expect(log).toContain("/session");
+		for (const secret of [ownerToken, issued, "waw_session="]) {
+			expect(log).not.toContain(secret);
+		}
 	});
 
 	it.each([
@@ -216,7 +282,7 @@ describe("browser session", () => {
 		});
 
 		expect(res.statusCode).toBe(201);
-		expect(res.headers["set-cookie"]).toMatch(/^waw_session=waw_dev_/);
+		expect(res.headers["set-cookie"]).toMatch(/^waw_session=waw_ses_/);
 		expect(inserts).toHaveLength(1);
 	});
 

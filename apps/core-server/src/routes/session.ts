@@ -10,7 +10,7 @@ import type { AppOptions } from "../app.ts";
 import { requireDevice } from "../auth/device-auth.ts";
 import {
 	findDeviceToken,
-	issueDeviceToken,
+	issueSessionToken,
 	revokeDeviceToken,
 } from "../auth/device-store.ts";
 import {
@@ -61,7 +61,7 @@ const session: FastifyPluginAsync<AppOptions> = async (
 				return reply.code(409).send({ error: "session_active" as const });
 			}
 			// The browser gets its own device; the token leaves only in the cookie.
-			const { id, token } = await issueDeviceToken(db);
+			const { id, token } = await issueSessionToken(db);
 			reply.header(
 				"set-cookie",
 				writeSessionCookie(token, request.protocol === "https"),

@@ -45,6 +45,11 @@ export async function notFound(_request: FastifyRequest, reply: FastifyReply) {
 		.send({ statusCode: 404, error: "Not Found", message: "Route not found" });
 }
 
+function bearerDeviceToken(authorization: string | undefined): string | null {
+	const token = BEARER.exec(authorization ?? "")?.[1];
+	return token !== undefined && DEVICE_TOKEN.test(token) ? token : null;
+}
+
 async function unauthorized(reply: FastifyReply): Promise<void> {
 	await reply
 		.code(401)
@@ -80,11 +85,8 @@ export function requireDevice(
 		}
 		const token = byCookie
 			? readSessionCookie(cookie)
-			: BEARER.exec(authorization ?? "")?.[1];
-		const device =
-			token && DEVICE_TOKEN.test(token)
-				? await findDeviceToken(db, token)
-				: null;
+			: bearerDeviceToken(authorization);
+		const device = token ? await findDeviceToken(db, token) : null;
 		const secure = request.protocol === "https";
 		if (!device) {
 			if (byCookie) {
@@ -95,7 +97,7 @@ export function requireDevice(
 			return;
 		}
 		if (byCookie && refreshCookie) {
-			reply.header("set-cookie", writeSessionCookie(token ?? null, secure));
+			reply.header("set-cookie", writeSessionCookie(token, secure));
 		}
 		request.device = device;
 	};
