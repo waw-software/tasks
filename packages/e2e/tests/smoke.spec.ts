@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
-const API = "http://127.0.0.1:3000";
-const WEB = "http://127.0.0.1:4173";
+// The server serves the API and the web client on one origin.
+const ORIGIN = "http://127.0.0.1:3000";
 
 const faces = [
 	{ family: "Inter", weight: "400" },
@@ -16,22 +16,38 @@ const viewports = [
 	{ width: 1440, height: 900 },
 ];
 
-test("REQ-001 AC-01 serves GET /health over HTTP", async ({ request }) => {
-	const response = await request.get(`${API}/health`);
+test("REQ-001 AC-01 REQ-010 AC-36 serves GET /health over HTTP", async ({
+	request,
+}) => {
+	const response = await request.get(`${ORIGIN}/health`);
 	expect(response.status()).toBe(200);
 	expect(response.headers()["content-type"]).toContain("application/json");
 	expect(await response.json()).toEqual({ apiVersion: 1, capabilities: [] });
 });
 
-test("REQ-001 AC-03 shows the web shell heading in Chromium", async ({
+test("REQ-001 AC-03 shows the web shell heading on the server origin", async ({
 	page,
 }) => {
-	await page.goto("/");
+	await page.goto(`${ORIGIN}/`);
 	await expect(
 		page
 			.getByRole("main")
 			.getByRole("heading", { level: 1, name: "WAW Tasks", exact: true }),
 	).toBeVisible();
+});
+
+test("REQ-001 AC-03 answers 404 for missing assets and unknown API paths", async ({
+	request,
+}) => {
+	for (const path of [
+		"/assets/nope.js",
+		"/fonts/nope.woff2",
+		"/nope",
+		"/tokens/nope/nope",
+	]) {
+		const response = await request.get(`${ORIGIN}${path}`);
+		expect({ path, status: response.status() }).toEqual({ path, status: 404 });
+	}
 });
 
 for (const viewport of viewports) {
@@ -41,9 +57,7 @@ for (const viewport of viewports) {
 		await page.setViewportSize(viewport);
 		await page.route("**/*", (route) => {
 			const { origin } = new URL(route.request().url());
-			return origin === WEB || origin === API
-				? route.continue()
-				: route.abort();
+			return origin === ORIGIN ? route.continue() : route.abort();
 		});
 		const fontResponses: { origin: string; status: number }[] = [];
 		page.on("response", (response) => {
@@ -54,7 +68,7 @@ for (const viewport of viewports) {
 				});
 			}
 		});
-		await page.goto("/");
+		await page.goto(`${ORIGIN}/`);
 
 		const loaded = await page.evaluate(async (wanted) => {
 			const results: boolean[] = [];
@@ -75,7 +89,7 @@ for (const viewport of viewports) {
 		expect(loaded).toEqual([true, true, true, true, true]);
 		await expect.poll(() => fontResponses.length).toBeGreaterThanOrEqual(5);
 		for (const response of fontResponses) {
-			expect(response).toEqual({ origin: WEB, status: 200 });
+			expect(response).toEqual({ origin: ORIGIN, status: 200 });
 		}
 		const heading = page.getByRole("heading", { level: 1, name: "WAW Tasks" });
 		await expect(heading).toHaveCSS("font-family", /^"Space Grotesk"/);

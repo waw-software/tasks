@@ -6,6 +6,8 @@ export interface AppOptions
 	extends FastifyServerOptions,
 		Partial<AutoloadPluginOptions> {
 	db?: AppDb;
+	/** The built web client; without it the web routes are not registered. */
+	webRoot?: string;
 }
 
 export const app: FastifyPluginAsync<AppOptions> = async (
