@@ -3,6 +3,7 @@ import Fastify from "fastify";
 import { app } from "./app.js";
 import { loggerOptions, notFound } from "./auth/device-auth.js";
 import { createDb } from "./auth/device-store.js";
+import { prepareSetup } from "./auth/setup.js";
 import { readServerConfig, redactDatabaseUrl } from "./db/config.js";
 import { migrateDatabase, openDatabase } from "./db/database.js";
 import { parsePublicUrl, publicAddressTrustProxy } from "./public-url.js";
@@ -59,7 +60,11 @@ async function main(): Promise<void> {
 		migrate: () => migrateDatabase(pool),
 		startWorker: () => worker.start(),
 		listen: async () => {
-			await server.register(app, { db, webRoot, publicUrl });
+			// The only place the code is logged; it comes before the listen line.
+			const setup = await prepareSetup(db, (setupCode) =>
+				server.log.info({ setupCode }, "First-run setup code"),
+			);
+			await server.register(app, { db, webRoot, publicUrl, setup });
 			await server.listen({ host, port });
 		},
 		closeHttp: async () => {

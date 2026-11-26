@@ -43,6 +43,13 @@ describe("REQ-001 AC-03 the web client on the server origin", () => {
 		expect(res.body).toBe(INDEX);
 	});
 
+	it("redirects /setup to / on a server without first-run setup", async () => {
+		const res = await get("/setup");
+
+		expect(res.statusCode).toBe(302);
+		expect(res.headers.location).toBe("/");
+	});
+
 	it("serves files under /assets/ and /fonts/", async () => {
 		const script = await get("/assets/a.js");
 		expect(script.statusCode).toBe(200);
