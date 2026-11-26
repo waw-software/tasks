@@ -102,8 +102,12 @@ function withDeadline<T>(
 	});
 }
 
-/** Spawns node apps/core-server/dist/index.js with DATABASE_URL, HOST=127.0.0.1, PORT=port ?? 0 and the rest of process.env. */
-export function spawnServer(databaseUrl: string, port?: number): ServerProcess {
+/** Spawns node apps/core-server/dist/index.js with DATABASE_URL, HOST=127.0.0.1, PORT=port ?? 0 and the rest of process.env; extraEnv wins over all of these, and an undefined value removes the variable. */
+export function spawnServer(
+	databaseUrl: string,
+	port?: number,
+	extraEnv?: NodeJS.ProcessEnv,
+): ServerProcess {
 	const child = spawn(process.execPath, ["apps/core-server/dist/index.js"], {
 		cwd: root,
 		env: {
@@ -111,6 +115,7 @@ export function spawnServer(databaseUrl: string, port?: number): ServerProcess {
 			DATABASE_URL: databaseUrl,
 			HOST: "127.0.0.1",
 			PORT: String(port ?? 0),
+			...extraEnv,
 		},
 		stdio: ["ignore", "pipe", "pipe"],
 	});

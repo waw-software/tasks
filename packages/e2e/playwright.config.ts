@@ -16,6 +16,7 @@ export default defineConfig({
 		"migrations.spec.ts",
 		"auth.spec.ts",
 		"runtime.spec.ts",
+		"pairing.spec.ts",
 	],
 	retries: 0,
 	workers: 1,
