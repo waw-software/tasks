@@ -1,0 +1,27 @@
+/* What inline styles cannot express: the layouts that change with the width. */
+.waw-connect {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	align-content: start;
+	align-items: start;
+	max-width: 560px;
+	margin-inline: auto;
+}
+
+@media (min-width: 960px) {
+	.waw-connect {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		max-width: 1040px;
+	}
+}
+
+/* On a phone the actions sit at the bottom of the screen. */
+@media (max-width: 699px) {
+	.waw-update {
+		min-height: 100dvh;
+	}
+
+	.waw-update-actions {
+		margin-top: auto;
+	}
+}
