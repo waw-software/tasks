@@ -10,8 +10,11 @@ export function readServerConfig(env: NodeJS.ProcessEnv): ServerConfig {
 	if (!databaseUrl) {
 		throw new Error("DATABASE_URL is not set");
 	}
-	const protocol = URL.parse(databaseUrl)?.protocol;
-	if (protocol !== "postgres:" && protocol !== "postgresql:") {
+	// Without "//" and a host, pg falls back to a local default database.
+	if (
+		!/^postgres(ql)?:\/\//.test(databaseUrl) ||
+		!URL.parse(databaseUrl)?.hostname
+	) {
 		throw new Error("DATABASE_URL is not a valid PostgreSQL URL");
 	}
 	const port = env.PORT ?? "3000";

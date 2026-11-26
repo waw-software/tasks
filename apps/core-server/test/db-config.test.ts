@@ -37,7 +37,14 @@ describe("readServerConfig", () => {
 		expect(errorMessage({})).toBe("DATABASE_URL is not set");
 	});
 
-	it.each(["mysql://u:s3cret@h/db", "not a url s3cret"])(
+	it.each([
+		"mysql://u:s3cret@h/db",
+		"not a url s3cret",
+		"postgres:",
+		"postgres:typo",
+		"postgresql:/db",
+		"postgres:///db",
+	])(
 		"REQ-011 AC-38: rejects a non-PostgreSQL DATABASE_URL without echoing it (%#)",
 		(url) => {
 			const message = errorMessage({ DATABASE_URL: url });
