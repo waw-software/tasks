@@ -193,6 +193,95 @@ describe("createDesktopConnection: session", () => {
 		]);
 	});
 
+	it("REQ-007 AC-28: recheck of a revoked token forgets it and is unauthorized", async () => {
+		const { connection, routes, store } = setup();
+		expect(await connection.load()).toMatchObject({ ok: true });
+		routes["GET /tokens/current"] = { status: 401 };
+
+		const result = await connection.recheck();
+
+		expect(result).toEqual(NO_CREDENTIAL);
+		expect(store.file()).toBeNull();
+		expect(await connection.load()).toEqual(SIGNED_OUT);
+	});
+
+	it.each<{
+		refused: string;
+		routes: Record<string, FakeRoute>;
+		requests: string[];
+	}>([
+		{
+			refused: "when the device is read",
+			routes: { "GET /tokens/current": { status: 401 } },
+			requests: REVOKE_CALLS.slice(0, 1),
+		},
+		{
+			refused: "on the revoke",
+			routes: { [REVOKE_ROUTE]: { status: 401 } },
+			requests: REVOKE_CALLS,
+		},
+	])(
+		"REQ-007 AC-28: sign-out forgets a token the server already refused $refused",
+		async (refusal) => {
+			const { connection, routes, server, store } = setup();
+			expect(await connection.load()).toMatchObject({ ok: true });
+			Object.assign(routes, refusal.routes);
+			server.requests.length = 0;
+
+			const result = await connection.signOut();
+
+			expect(result).toEqual(SIGNED_OUT);
+			expect(calls(server.requests)).toEqual(refusal.requests);
+			expect(store.file()).toBeNull();
+			expect(await connection.recheck()).toEqual(NO_CREDENTIAL);
+		},
+	);
+
+	it("REQ-010 AC-35: a limited choice that cannot be saved keeps the connection for this run only", async () => {
+		const { connection, connect, routes, store } = setup();
+		routes["GET /health"] = { status: 200, body: HEALTH_OLD };
+		const accepted = {
+			ok: true,
+			value: {
+				...SAVED_VIEW,
+				health: HEALTH_OLD,
+				persisted: false,
+				limitedAccepted: true,
+			},
+		};
+		expect(await connection.load()).toMatchObject({ ok: true });
+		store.failWrites = true;
+
+		const result = await connection.acknowledgeLimited();
+
+		expect(result).toEqual(accepted);
+		expect(store.file()).toBeNull();
+		expect(await connection.recheck()).toEqual(accepted);
+		expect(await connect().load()).toEqual(SIGNED_OUT);
+	});
+
+	it("REQ-007 AC-28: a removal that fails is reported once and the connection carries on", async () => {
+		const store = savedStore();
+		store.failWrites = true;
+		store.failClears = true;
+		const reports: unknown[][] = [];
+		const connection = createDesktopConnection({
+			store,
+			transport: fakeServer(healthyRoutes()).transport,
+			onStoreProblem: (...args) => {
+				reports.push(args);
+			},
+		});
+		const memoryView = { ok: true, value: { ...SAVED_VIEW, persisted: false } };
+
+		const result = await connection.submit(MANUAL);
+
+		expect(result).toEqual(memoryView);
+		expect(await connection.recheck()).toEqual(memoryView);
+		// The whole argument list: nothing else, so no token and no path.
+		expect(reports).toStrictEqual([["clear-failed"]]);
+	});
+
 	it("REQ-010 AC-35: each fresh health decides the update; only the limited choice survives", async () => {
 		const { connection, connect, routes, store } = setup();
 		routes["GET /health"] = { status: 200, body: HEALTH_OLD };
