@@ -25,6 +25,7 @@ const SIGNED_OUT = { ok: true, value: null };
 const UNREACHABLE = { ok: false, error: "unreachable" };
 const NO_CREDENTIAL = { ok: false, error: "unauthorized" };
 const INVALID = { ok: false, error: "invalid-response" };
+const NOT_REMOVED = { ok: false, error: "storage" };
 const SAVED_VIEW = {
 	serverUrl: ORIGIN,
 	health: HEALTH_FULL,
@@ -253,17 +254,13 @@ describe("createDesktopConnection: session", () => {
 		},
 	);
 
-	it("REQ-010 AC-35: a limited choice that cannot be saved keeps the connection for this run only", async () => {
+	it("REQ-010 AC-35: a limited choice that cannot be saved keeps the saved connection", async () => {
 		const { connection, connect, routes, store } = setup();
 		routes["GET /health"] = { status: 200, body: HEALTH_OLD };
+		const oldView = { ...SAVED_VIEW, health: HEALTH_OLD };
 		const accepted = {
 			ok: true,
-			value: {
-				...SAVED_VIEW,
-				health: HEALTH_OLD,
-				persisted: false,
-				limitedAccepted: true,
-			},
+			value: { ...oldView, limitedAccepted: true },
 		};
 		expect(await connection.load()).toMatchObject({ ok: true });
 		store.failWrites = true;
@@ -271,9 +268,42 @@ describe("createDesktopConnection: session", () => {
 		const result = await connection.acknowledgeLimited();
 
 		expect(result).toEqual(accepted);
-		expect(store.file()).toBeNull();
+		expect(store.file()).toEqual(STORED);
 		expect(await connection.recheck()).toEqual(accepted);
-		expect(await connect().load()).toEqual(SIGNED_OUT);
+		// Only the limited choice was lost.
+		expect(await connect().load()).toEqual({ ok: true, value: oldView });
+	});
+
+	it("REQ-010 AC-35: a stale limited choice that cannot be cleared keeps the saved connection", async () => {
+		const record = {
+			...STORED,
+			limitedAck: { serverUrl: ORIGIN, capabilityKey: "[]" },
+		};
+		const { connection, store } = setup(
+			memoryStore({ kind: "found", connection: record }),
+		);
+		store.failWrites = true;
+
+		const result = await connection.load();
+
+		expect(result).toEqual({ ok: true, value: SAVED_VIEW });
+		expect(store.file()).toEqual(record);
+	});
+
+	it("REQ-007 AC-28: sign-out reports a record it could not remove", async () => {
+		const { connection, server, store } = setup();
+		expect(await connection.load()).toMatchObject({ ok: true });
+		store.failClears = true;
+
+		const result = await connection.signOut();
+
+		expect(result).toEqual(NOT_REMOVED);
+		server.requests.length = 0;
+		expect(await connection.recheck()).toEqual(NO_CREDENTIAL);
+		expect(server.requests).toEqual([]);
+		store.failClears = false;
+		expect(await connection.signOut()).toEqual(SIGNED_OUT);
+		expect(store.file()).toBeNull();
 	});
 
 	it("REQ-007 AC-28: a removal that fails is reported once and the connection carries on", async () => {
@@ -365,7 +395,7 @@ describe("createDesktopConnection: session", () => {
 
 		const result = await connection.signOut();
 
-		expect(result).toEqual(SIGNED_OUT);
+		expect(result).toEqual(NOT_REMOVED);
 		expect(reports).toStrictEqual([["clear-failed"], ["clear-failed"]]);
 	});
 
@@ -499,7 +529,7 @@ describe("createDesktopConnection: session", () => {
 	});
 
 	it("REQ-007 AC-28: a clean quit settles in time while another step is still running", async () => {
-		const { connection, routes } = await memoryOnly();
+		const { connection, routes, server } = await memoryOnly();
 		routes["GET /tokens/current"] = "hang";
 		vi.useFakeTimers();
 		const rechecked = connection.recheck();
@@ -511,5 +541,11 @@ describe("createDesktopConnection: session", () => {
 		// Let the hanging step reach its own timeout.
 		await vi.advanceTimersByTimeAsync(10_000);
 		expect(await rechecked).toEqual(UNREACHABLE);
+
+		// The server answers again, but the quit ended the credential.
+		Object.assign(routes, healthyRoutes());
+		server.requests.length = 0;
+		expect(await connection.recheck()).toEqual(NO_CREDENTIAL);
+		expect(server.requests).toEqual([]);
 	});
 });
