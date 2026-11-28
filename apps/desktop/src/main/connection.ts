@@ -59,7 +59,8 @@ export function createDesktopConnection(opts: {
 		}
 	}
 
-	async function removeRecord(): Promise<void> {
+	/** False when the removal failed. */
+	async function removeRecord(): Promise<boolean> {
 		try {
 			await store.clear();
 			removalPending = false;
@@ -67,26 +68,41 @@ export function createDesktopConnection(opts: {
 			removalPending = true;
 			onStoreProblem?.("clear-failed");
 		}
+		return !removalPending;
 	}
 
-	async function save(credential: Active): Promise<void> {
+	/** False when the record was not written; the error is dropped, it can name the path. */
+	async function writeRecord(credential: Active): Promise<boolean> {
 		const { serverUrl, token, limitedAck } = credential;
 		const record: StoredConnection = { serverUrl, token, limitedAck };
 		try {
 			await store.write(record);
-			credential.persisted = true;
-			// The write replaced whatever was left on disk.
-			removalPending = false;
 		} catch {
-			credential.persisted = false;
-			// A relaunch must never restore an older connection.
-			await removeRecord();
+			return false;
 		}
+		// The write replaced whatever was left on disk.
+		removalPending = false;
+		return true;
 	}
 
-	async function forget(credential: Active): Promise<void> {
+	async function saveNew(credential: Active): Promise<void> {
+		credential.persisted = await writeRecord(credential);
+		// A relaunch must never restore an older connection.
+		if (!credential.persisted) await removeRecord();
+	}
+
+	/**
+	 * Writes a changed limited choice into the saved record. When that fails, the
+	 * old record holds the same connection: it stays, and only the choice is lost.
+	 */
+	async function updateSaved(credential: Active): Promise<void> {
+		if (credential.persisted) await writeRecord(credential);
+	}
+
+	/** False when a removal that was needed failed. */
+	async function forget(credential: Active): Promise<boolean> {
 		active = null;
-		if (credential.persisted || removalPending) await removeRecord();
+		return credential.persisted || removalPending ? removeRecord() : true;
 	}
 
 	/** Drops a limited choice that no longer fits this health. */
@@ -101,7 +117,7 @@ export function createDesktopConnection(opts: {
 		);
 		if (clear) {
 			credential.limitedAck = null;
-			if (credential.persisted) await save(credential);
+			await updateSaved(credential);
 		}
 		return {
 			serverUrl: credential.serverUrl,
@@ -181,7 +197,7 @@ export function createDesktopConnection(opts: {
 				active = credential;
 				// A later load must not replace this credential with a stored one.
 				storeRead = true;
-				await save(credential);
+				await saveNew(credential);
 				return { ok: true, value: await view(credential, health) };
 			}),
 
@@ -196,16 +212,18 @@ export function createDesktopConnection(opts: {
 					serverUrl: credential.serverUrl,
 					capabilityKey: capabilityKey(health),
 				};
-				if (credential.persisted) await save(credential);
+				await updateSaved(credential);
 				return { ok: true, value: await view(credential, health) };
 			}),
 
 		signOut: () =>
 			queued(async () => {
 				const credential = active;
+				const notRemoved = { ok: false, error: "storage" } as const;
 				if (credential === null) {
-					if (removalPending) await removeRecord();
-					return signedOut();
+					return !removalPending || (await removeRecord())
+						? signedOut()
+						: notRemoved;
 				}
 				const { serverUrl, token } = credential;
 				const device = await transport.run((request, signal) =>
@@ -218,8 +236,7 @@ export function createDesktopConnection(opts: {
 					: device;
 				// A token the server already refuses needs no revoke.
 				if (!revoked.ok && revoked.error !== "unauthorized") return revoked;
-				await forget(credential);
-				return signedOut();
+				return (await forget(credential)) ? signedOut() : notRemoved;
 			}),
 
 		probe: async (text) => {
@@ -252,23 +269,25 @@ export function createDesktopConnection(opts: {
 				const credential = active;
 				if (credential === null || credential.persisted) return;
 				const remainingMs = timeoutMs - (performance.now() - calledAt);
-				if (expired || remainingMs <= 0) return;
-				const { serverUrl, token } = credential;
-				// Best effort: the result does not matter, the app is quitting.
-				await transport.run(
-					async (request, signal) => {
-						const device = await currentDevice(
-							request,
-							signal,
-							serverUrl,
-							token,
-						);
-						return device.ok
-							? revokeDevice(request, signal, serverUrl, token, device.id)
-							: device;
-					},
-					{ timeoutMs: remainingMs },
-				);
+				if (!expired && remainingMs > 0) {
+					const { serverUrl, token } = credential;
+					// Best effort: the result does not matter, the app is quitting.
+					await transport.run(
+						async (request, signal) => {
+							const device = await currentDevice(
+								request,
+								signal,
+								serverUrl,
+								token,
+							);
+							return device.ok
+								? revokeDevice(request, signal, serverUrl, token, device.id)
+								: device;
+						},
+						{ timeoutMs: remainingMs },
+					);
+				}
+				// With or without a revoke, the quit ends this credential.
 				active = null;
 			});
 			return Promise.race([revoked, deadline]).finally(() =>
