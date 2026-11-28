@@ -33,13 +33,16 @@ keeps.
   of its own and keeps only that one. A pairing link gives the desktop its own token. One credential
   is active at a time.
 * **Storage.** The record is replaced atomically, is private (mode 0600) and holds the token only in
-  encrypted form. If the record cannot be saved, the app tries to remove the old one and the
+  encrypted form, sealed together with the server address, so editing the file cannot send the token
+  to another server. If the record cannot be saved, the app tries to remove the old one and the
   connection lasts for this run only. A failed removal is reported to the caller of the connection,
-  without a path or a token. The discard step for a clean quit tries to revoke an unsaved token
+  without a path or a token, and is tried again at sign-out. The discard step for a clean quit tries to revoke an unsaved token
   within a given time limit. On Linux with the `basic_text` backend (no keyring), nothing is saved.
   If the keyring is unavailable or the record file cannot be read at launch, the app keeps the record
   and shows Connect. A malformed record is removed.
-* **Revocation and sign-out.** The desktop forgets a token that the server refuses. Sign-out revokes
+* **Revocation and sign-out.** The desktop forgets a token only when the server itself refuses
+  it (its 401 with `{"error": "unauthorized"}`); any other 401, for example from a proxy, keeps the
+  credential. Sign-out revokes
   the desktop's token on the server and forgets it. If the revocation fails for any other reason,
   such as an unreachable server, the desktop keeps the credential.
 * **Process boundary.** The main process makes every request to the server with Electron's
