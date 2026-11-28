@@ -53,16 +53,28 @@ function fakeBox(): SecretBox & { secure: boolean } {
 
 const sealed = (plain: string) => encrypt(plain).toString("base64");
 
+/** What lies under the seal; each case overrides one field. */
+const payload = (overrides: Record<string, unknown> = {}) =>
+	JSON.stringify({ serverUrl: SERVER, token: TOKEN, ...overrides });
+
 /** A well-formed record as it lies on disk; each case overrides one field. */
 function record(overrides: Record<string, unknown> = {}): string {
 	return JSON.stringify({
 		v: 1,
-		serverUrl: SERVER,
-		token: sealed(TOKEN),
+		sealed: sealed(payload()),
 		limitedAck: null,
 		...overrides,
 	});
 }
+
+/** A well-formed record around another sealed payload. */
+const recordSealing = (plain: string) => record({ sealed: sealed(plain) });
+
+/** What the unchanged `record()` reads as. */
+const FOUND = {
+	kind: "found",
+	connection: { serverUrl: SERVER, token: TOKEN, limitedAck: null },
+};
 
 describe("credential store", () => {
 	let dir: string;
@@ -108,11 +120,67 @@ describe("credential store", () => {
 		expect(text).not.toContain("waw_dev_");
 		expect(JSON.parse(text)).toEqual({
 			v: 1,
-			serverUrl: SERVER,
-			token: sealed(TOKEN),
+			sealed: sealed(payload()),
 			limitedAck: connection.limitedAck,
 		});
 	});
+
+	it("REQ-007 AC-28: the server address is sealed with the token", async () => {
+		const store = createCredentialStore({ dir, box: fakeBox() });
+		// A limited choice names its server in the open, so this record has none.
+		const unacknowledged = { ...connection, limitedAck: null };
+
+		await store.write(unacknowledged);
+
+		const text = await realFs.readFile(target, "utf8");
+		expect(text).not.toContain(SERVER);
+		expect(text).not.toContain("waw_dev_");
+		expect(JSON.parse(text)).toHaveProperty("sealed");
+		expect(await store.read()).toEqual({
+			kind: "found",
+			connection: unacknowledged,
+		});
+	});
+
+	it("REQ-007 AC-28: a record whose address lies outside the seal is removed", async () => {
+		const store = createCredentialStore({ dir, box: fakeBox() });
+		await realFs.writeFile(
+			target,
+			JSON.stringify({
+				v: 1,
+				serverUrl: SERVER,
+				token: sealed(TOKEN),
+				limitedAck: null,
+			}),
+		);
+
+		expect(await store.read()).toEqual({ kind: "none" });
+		expect(await realFs.readdir(dir)).toEqual([]);
+	});
+
+	it.each([
+		["not JSON", "not json"],
+		["missing serverUrl", payload({ serverUrl: undefined })],
+		["missing token", payload({ token: undefined })],
+		[
+			"serverUrl not canonical",
+			payload({ serverUrl: "https://evil.example/" }),
+		],
+		["token not a device token", payload({ token: "waw_dev_short" })],
+	])(
+		"REQ-007 AC-28: a sealed payload that is not a connection is removed (%s)",
+		async (_name, plain) => {
+			const store = createCredentialStore({ dir, box: fakeBox() });
+			// The well-formed payload is found, so the case fails for its one change.
+			await realFs.writeFile(target, record());
+			expect(await store.read()).toEqual(FOUND);
+
+			await realFs.writeFile(target, recordSealing(plain));
+
+			expect(await store.read()).toEqual({ kind: "none" });
+			expect(await realFs.readdir(dir)).toEqual([]);
+		},
+	);
 
 	it("REQ-007 AC-28: the file is private, also when it replaces a 0644 file", async () => {
 		const store = createCredentialStore({ dir, box: fakeBox() });
@@ -225,25 +293,32 @@ describe("credential store", () => {
 
 		// The unchanged fixture is well-formed, so each case fails for its one change.
 		await realFs.writeFile(target, record());
-		expect(await store.read()).toEqual({
-			kind: "found",
-			connection: { serverUrl: SERVER, token: TOKEN, limitedAck: null },
-		});
+		expect(await store.read()).toEqual(FOUND);
 
 		const cases: [string, string][] = [
 			["not JSON", "not json"],
 			["not an object", "null"],
 			["wrong version", record({ v: 2 })],
-			["missing serverUrl", record({ serverUrl: undefined })],
-			["serverUrl not a string", record({ serverUrl: 5 })],
-			["origin not canonical", record({ serverUrl: "https://x.example/" })],
-			["remote http origin", record({ serverUrl: "http://x.example" })],
-			["token not a string", record({ token: 5 })],
-			["token empty", record({ token: "" })],
-			["token not base64", record({ token: "not base64!" })],
+			["missing sealed", record({ sealed: undefined })],
+			["sealed not a string", record({ sealed: 5 })],
+			["sealed empty", record({ sealed: "" })],
+			["sealed not base64", record({ sealed: "not base64!" })],
+			["sealed payload not an object", recordSealing("null")],
+			["missing serverUrl", recordSealing(payload({ serverUrl: undefined }))],
+			["serverUrl not a string", recordSealing(payload({ serverUrl: 5 }))],
+			[
+				"origin not canonical",
+				recordSealing(payload({ serverUrl: "https://x.example/" })),
+			],
+			[
+				"remote http origin",
+				recordSealing(payload({ serverUrl: "http://x.example" })),
+			],
+			["token not a string", recordSealing(payload({ token: 5 }))],
+			["token empty", recordSealing(payload({ token: "" }))],
 			[
 				"decrypted token not a device token",
-				record({ token: sealed("waw_dev_short") }),
+				recordSealing(payload({ token: "waw_dev_short" })),
 			],
 			["limitedAck a number", record({ limitedAck: 5 })],
 			[

@@ -86,6 +86,12 @@ type FakeRequest = {
 /** "throw": the request fails at once. "hang": no answer until the abort. */
 export type FakeRoute = { status: number; body?: unknown } | "throw" | "hang";
 
+/** The WAW server's answer to a token it refuses. */
+export const REFUSED: FakeRoute = {
+	status: 401,
+	body: { error: "unauthorized" },
+};
+
 /**
  * Routes are keyed "METHOD /path" and read on every request, so a test changes
  * the server by changing the object it passed. A missing route answers 404.

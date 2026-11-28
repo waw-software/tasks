@@ -9,8 +9,9 @@ import {
 	memoryStore,
 	ORIGIN,
 	OWNER_TOKEN,
+	REFUSED,
 } from "./connection.fakes";
-import type { CredentialStore } from "./types";
+import type { CredentialStore, Transport } from "./types";
 
 const DEVICE_ID = "22222222-2222-4222-8222-222222222222";
 const STORED = { serverUrl: ORIGIN, token: MINTED.token, limitedAck: null };
@@ -23,6 +24,7 @@ const REVOKE_ROUTE = `DELETE /tokens/${DEVICE_ID}`;
 const SIGNED_OUT = { ok: true, value: null };
 const UNREACHABLE = { ok: false, error: "unreachable" };
 const NO_CREDENTIAL = { ok: false, error: "unauthorized" };
+const INVALID = { ok: false, error: "invalid-response" };
 const SAVED_VIEW = {
 	serverUrl: ORIGIN,
 	health: HEALTH_FULL,
@@ -62,6 +64,20 @@ async function memoryOnly() {
 	});
 	context.server.requests.length = 0;
 	return context;
+}
+
+/** How the promise stands now, for a test that drives the clock. */
+function track(promise: Promise<unknown>): () => string {
+	let outcome = "pending";
+	promise.then(
+		() => {
+			outcome = "resolved";
+		},
+		() => {
+			outcome = "rejected";
+		},
+	);
+	return () => outcome;
 }
 
 /** Each request with the secret it carried. */
@@ -104,7 +120,7 @@ describe("createDesktopConnection: session", () => {
 
 	it("REQ-007 AC-28: a revoked token is forgotten and load shows Connect", async () => {
 		const { connection, routes, store } = setup();
-		routes["GET /tokens/current"] = { status: 401 };
+		routes["GET /tokens/current"] = REFUSED;
 
 		const result = await connection.load();
 
@@ -196,7 +212,7 @@ describe("createDesktopConnection: session", () => {
 	it("REQ-007 AC-28: recheck of a revoked token forgets it and is unauthorized", async () => {
 		const { connection, routes, store } = setup();
 		expect(await connection.load()).toMatchObject({ ok: true });
-		routes["GET /tokens/current"] = { status: 401 };
+		routes["GET /tokens/current"] = REFUSED;
 
 		const result = await connection.recheck();
 
@@ -212,12 +228,12 @@ describe("createDesktopConnection: session", () => {
 	}>([
 		{
 			refused: "when the device is read",
-			routes: { "GET /tokens/current": { status: 401 } },
+			routes: { "GET /tokens/current": REFUSED },
 			requests: REVOKE_CALLS.slice(0, 1),
 		},
 		{
 			refused: "on the revoke",
-			routes: { [REVOKE_ROUTE]: { status: 401 } },
+			routes: { [REVOKE_ROUTE]: REFUSED },
 			requests: REVOKE_CALLS,
 		},
 	])(
@@ -280,6 +296,77 @@ describe("createDesktopConnection: session", () => {
 		expect(await connection.recheck()).toEqual(memoryView);
 		// The whole argument list: nothing else, so no token and no path.
 		expect(reports).toStrictEqual([["clear-failed"]]);
+	});
+
+	it("REQ-007 AC-28: a 401 that is not the server's keeps the connection", async () => {
+		const { connection, routes, store } = setup();
+		routes["GET /tokens/current"] = { status: 401 };
+
+		const result = await connection.load();
+
+		expect(result).toEqual(INVALID);
+		expect(store.file()).toEqual(STORED);
+		expect(store.clears).toBe(0);
+		Object.assign(routes, healthyRoutes());
+		expect(await connection.recheck()).toEqual({
+			ok: true,
+			value: SAVED_VIEW,
+		});
+	});
+
+	it("REQ-007 AC-28: sign-out behind a refusing proxy keeps the connection", async () => {
+		const { connection, routes, store } = setup();
+		expect(await connection.load()).toMatchObject({ ok: true });
+		routes[REVOKE_ROUTE] = { status: 401 };
+
+		const result = await connection.signOut();
+
+		expect(result).toEqual(INVALID);
+		expect(store.file()).toEqual(STORED);
+		expect(store.clears).toBe(0);
+		expect(await connection.recheck()).toEqual({
+			ok: true,
+			value: SAVED_VIEW,
+		});
+	});
+
+	it("REQ-007 AC-28: a removal that failed is retried at sign-out", async () => {
+		const { connection, connect, store } = setup();
+		store.failWrites = true;
+		store.failClears = true;
+		expect(await connection.submit(MANUAL)).toMatchObject({
+			ok: true,
+			value: { persisted: false },
+		});
+		// The older record is still on disk.
+		expect(store.file()).toEqual(STORED);
+		store.failClears = false;
+
+		const result = await connection.signOut();
+
+		expect(result).toEqual(SIGNED_OUT);
+		expect(store.file()).toBeNull();
+		expect(await connect().load()).toEqual(SIGNED_OUT);
+	});
+
+	it("REQ-007 AC-28: a retried removal that fails is reported again", async () => {
+		const store = savedStore();
+		store.failWrites = true;
+		store.failClears = true;
+		const reports: unknown[][] = [];
+		const connection = createDesktopConnection({
+			store,
+			transport: fakeServer(healthyRoutes()).transport,
+			onStoreProblem: (...args) => {
+				reports.push(args);
+			},
+		});
+		expect(await connection.submit(MANUAL)).toMatchObject({ ok: true });
+
+		const result = await connection.signOut();
+
+		expect(result).toEqual(SIGNED_OUT);
+		expect(reports).toStrictEqual([["clear-failed"], ["clear-failed"]]);
 	});
 
 	it("REQ-010 AC-35: each fresh health decides the update; only the limited choice survives", async () => {
@@ -368,22 +455,37 @@ describe("createDesktopConnection: session", () => {
 		expect(calls(answering.server.requests)).toEqual(REVOKE_CALLS);
 		expect(await answering.connection.recheck()).toEqual(NO_CREDENTIAL);
 
-		// A server that never answers: discard resolves once the limit has passed.
-		const silent = await memoryOnly();
-		silent.routes["GET /tokens/current"] = "hang";
+		// A slow server whose revoke never answers: both requests share one limit.
+		const store = memoryStore();
+		store.failWrites = true;
+		const routes = { ...healthyRoutes(), [REVOKE_ROUTE]: "hang" as const };
+		const server = fakeServer(routes);
+		let delayMs = 0;
+		const slow: Transport = {
+			run: (exchange, options) =>
+				server.transport.run(
+					(request, signal) =>
+						exchange(async (url, init) => {
+							if (delayMs > 0 && url.endsWith("/tokens/current")) {
+								await new Promise((resolve) => setTimeout(resolve, delayMs));
+							}
+							return request(url, init);
+						}, signal),
+					options,
+				),
+		};
+		const stalled = createDesktopConnection({ store, transport: slow });
+		expect(await stalled.submit(MANUAL)).toMatchObject({ ok: true });
+		server.requests.length = 0;
+		delayMs = 40;
 		vi.useFakeTimers();
-		let outcome = "pending";
-		silent.connection.discard(50).then(
-			() => {
-				outcome = "resolved";
-			},
-			() => {
-				outcome = "rejected";
-			},
-		);
-		await vi.advanceTimersByTimeAsync(50);
-		expect(outcome).toBe("resolved");
-		expect(await silent.connection.recheck()).toEqual(NO_CREDENTIAL);
+		const outcome = track(stalled.discard(50));
+		await vi.advanceTimersByTimeAsync(49);
+		expect(outcome()).toBe("pending");
+		await vi.advanceTimersByTimeAsync(1);
+		expect(outcome()).toBe("resolved");
+		expect(calls(server.requests)).toEqual(REVOKE_CALLS);
+		expect(await stalled.recheck()).toEqual(NO_CREDENTIAL);
 		vi.useRealTimers();
 
 		// A saved credential is left alone.
@@ -394,5 +496,20 @@ describe("createDesktopConnection: session", () => {
 		expect(saved.server.requests).toEqual([]);
 		expect(saved.store.file()).toEqual(STORED);
 		expect(saved.store.clears).toBe(0);
+	});
+
+	it("REQ-007 AC-28: a clean quit settles in time while another step is still running", async () => {
+		const { connection, routes } = await memoryOnly();
+		routes["GET /tokens/current"] = "hang";
+		vi.useFakeTimers();
+		const rechecked = connection.recheck();
+
+		const outcome = track(connection.discard(50));
+		await vi.advanceTimersByTimeAsync(50);
+
+		expect(outcome()).toBe("resolved");
+		// Let the hanging step reach its own timeout.
+		await vi.advanceTimersByTimeAsync(10_000);
+		expect(await rechecked).toEqual(UNREACHABLE);
 	});
 });

@@ -9,6 +9,7 @@ import {
 	ORIGIN,
 	OWNER_TOKEN,
 	PAIRING_LINK,
+	REFUSED,
 } from "./connection.fakes";
 
 const OWNER_ID = "22222222-2222-4222-8222-222222222222";
@@ -132,7 +133,7 @@ describe("createDesktopConnection: connect", () => {
 	it("REQ-007 AC-28: a refused token is unauthorized and nothing is saved", async () => {
 		const { connection, server, store } = setup({
 			...healthyRoutes(),
-			"GET /tokens/current": { status: 401 },
+			"GET /tokens/current": REFUSED,
 		});
 
 		const result = await connection.submit(MANUAL);

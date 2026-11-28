@@ -23,6 +23,9 @@ function fakeRequest(reply: () => Promise<HttpReply>) {
 const answers = (status: number, body: unknown) =>
 	fakeRequest(async () => ({ status, json: async () => body }));
 
+/** The WAW server's answer to a token it refuses. */
+const refused = () => answers(401, { error: "unauthorized" });
+
 /** A reply whose body cannot be read: reading it would end as unreachable. */
 const unreadable = (status: number) =>
 	fakeRequest(async () => ({
@@ -63,7 +66,7 @@ describe("currentDevice", () => {
 		expect(ok.calls[0]?.init.signal).toBe(signal);
 
 		const cases: [ReturnType<typeof fakeRequest>, object][] = [
-			[unreadable(401), UNAUTHORIZED],
+			[refused(), UNAUTHORIZED],
 			[answers(200, {}), INVALID],
 			[unreadable(500), INVALID],
 			[answers(201, { id: ID }), INVALID],
@@ -106,7 +109,7 @@ describe("mintDevice", () => {
 		expect(ok.calls[0]?.init.body).toBeUndefined();
 
 		const cases: [ReturnType<typeof fakeRequest>, object][] = [
-			[unreadable(401), UNAUTHORIZED],
+			[refused(), UNAUTHORIZED],
 			[answers(201, { id: ID, token: "waw_dev_short" }), INVALID],
 			[unreadable(500), INVALID],
 			[answers(200, { id: ID, token: MINTED_TOKEN }), INVALID],
@@ -149,7 +152,7 @@ describe("revokeDevice", () => {
 		]);
 
 		const cases: [ReturnType<typeof fakeRequest>, object][] = [
-			[unreadable(401), UNAUTHORIZED],
+			[refused(), UNAUTHORIZED],
 			[unreadable(500), INVALID],
 			[unreadable(200), INVALID],
 			[failing(), UNREACHABLE],
@@ -160,4 +163,35 @@ describe("revokeDevice", () => {
 			).toEqual(expected);
 		}
 	});
+});
+
+describe("a 401", () => {
+	it.each<[string, (request: RequestFn, signal: AbortSignal) => unknown]>([
+		[
+			"currentDevice",
+			(request, signal) => currentDevice(request, signal, SERVER, TOKEN),
+		],
+		[
+			"mintDevice",
+			(request, signal) => mintDevice(request, signal, SERVER, TOKEN),
+		],
+		[
+			"revokeDevice",
+			(request, signal) => revokeDevice(request, signal, SERVER, TOKEN, ID),
+		],
+	])(
+		"REQ-007 AC-28: only the server's own 401 means the token is refused (%s)",
+		async (_name, call) => {
+			const { signal } = new AbortController();
+			const cases: [string, ReturnType<typeof fakeRequest>, object][] = [
+				["the server's body", refused(), UNAUTHORIZED],
+				["no body", unreadable(401), INVALID],
+				["an empty object", answers(401, {}), INVALID],
+				["another error", answers(401, { error: "other" }), INVALID],
+			];
+			for (const [name, fake, expected] of cases) {
+				expect(await call(fake.request, signal), name).toEqual(expected);
+			}
+		},
+	);
 });
