@@ -7,7 +7,12 @@ import {
 	createCredentialStore,
 	secureBox,
 } from "./credential-store";
-import type { SafeStorageLike, SecretBox, StoredConnection } from "./types";
+import type {
+	SafeStorageLike,
+	SecretBox,
+	StoredConnection,
+	StoreFs,
+} from "./types";
 
 const TOKEN = `waw_dev_${"A".repeat(43)}`;
 const SERVER = "https://x.example";
@@ -16,6 +21,13 @@ const connection: StoredConnection = {
 	serverUrl: SERVER,
 	token: TOKEN,
 	limitedAck: { serverUrl: SERVER, capabilityKey: "tasks" },
+};
+
+/** What a failing write tries to put in place of `connection`. */
+const replacement: StoredConnection = {
+	serverUrl: "https://y.example",
+	token: `waw_dev_${"B".repeat(43)}`,
+	limitedAck: null,
 };
 
 function encrypt(plain: string): Buffer {
@@ -133,18 +145,72 @@ describe("credential store", () => {
 			},
 		});
 
-		await expect(
-			store.write({
-				serverUrl: "https://y.example",
-				token: `waw_dev_${"B".repeat(43)}`,
-				limitedAck: null,
-			}),
-		).rejects.toThrow("interrupted");
+		await expect(store.write(replacement)).rejects.toThrow();
 
 		expect(renames).toEqual([target]);
 		expect(await realFs.readFile(target, "utf8")).toBe(before);
 		expect(await store.read()).toEqual({ kind: "found", connection });
 		expect(await realFs.readdir(dir)).toEqual(["connection.json"]);
+	});
+
+	const failingOpen: StoreFs["open"] = async () => {
+		throw new Error("open failed");
+	};
+	// The real open creates the temp file, so the store has something to clean up.
+	const failingWriteFile: StoreFs["open"] = async (...args) => {
+		const handle = await realFs.open(...args);
+		handle.writeFile = async () => {
+			throw new Error("write failed");
+		};
+		return handle;
+	};
+
+	it.each([
+		["open rejects", failingOpen],
+		["writeFile rejects", failingWriteFile],
+	])(
+		"REQ-007 AC-28: a failed temp write keeps the old record and leaves no temp file (%s)",
+		async (_name, open) => {
+			const box = fakeBox();
+			await createCredentialStore({ dir, box }).write(connection);
+			const store = createCredentialStore({
+				dir,
+				box,
+				fs: {
+					readFile: realFs.readFile,
+					open,
+					rename: realFs.rename,
+					rm: realFs.rm,
+				},
+			});
+
+			await expect(store.write(replacement)).rejects.toThrow();
+
+			expect(await store.read()).toEqual({ kind: "found", connection });
+			expect(await realFs.readdir(dir)).toEqual(["connection.json"]);
+		},
+	);
+
+	it("REQ-007 AC-28: a read error other than a missing file reads as unavailable and keeps the file", async () => {
+		const text = record();
+		await realFs.writeFile(target, text);
+		const store = createCredentialStore({
+			dir,
+			box: fakeBox(),
+			fs: {
+				readFile: async () => {
+					throw Object.assign(new Error("permission denied"), {
+						code: "EACCES",
+					});
+				},
+				open: realFs.open,
+				rename: realFs.rename,
+				rm: realFs.rm,
+			},
+		});
+
+		expect(await store.read()).toEqual({ kind: "unavailable" });
+		expect(await realFs.readFile(target, "utf8")).toBe(text);
 	});
 
 	it("REQ-007 AC-28: no file reads as none", async () => {
