@@ -75,6 +75,16 @@ export type WebConnectAdapter = ConnectAdapter & {
 	signOut(): Promise<ConnectResult<null>>;
 };
 
+export type ServerProbe = { serverUrl: string; health: HealthResponse };
+
+/** What the desktop preload exposes as window.wawDesktop. */
+export type DesktopBridge = {
+	connect: WebConnectAdapter & {
+		/** Health of the server named by a URL or a pairing link; sends no secret. */
+		probe(text: string): Promise<ConnectResult<ServerProbe>>;
+	};
+};
+
 const LOOPBACK_HOST = /^(?:localhost|\[::1\]|127(?:\.\d{1,3}){3})(?::\d+)?$/i;
 
 // Checked on the raw text: URL would silently drop an empty query, fragment or
