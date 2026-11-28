@@ -39,6 +39,8 @@ export function createDesktopConnection(opts: {
 	const { store, transport, onStoreProblem } = opts;
 	let active: Active | null = null;
 	let storeRead = false;
+	/** A removal failed, so the disk may still hold an older record. */
+	let removalPending = false;
 	let tail: Promise<unknown> = Promise.resolve();
 
 	/** Runs the steps one at a time, so writes and clears happen in call order. */
@@ -60,7 +62,9 @@ export function createDesktopConnection(opts: {
 	async function removeRecord(): Promise<void> {
 		try {
 			await store.clear();
+			removalPending = false;
 		} catch {
+			removalPending = true;
 			onStoreProblem?.("clear-failed");
 		}
 	}
@@ -71,6 +75,8 @@ export function createDesktopConnection(opts: {
 		try {
 			await store.write(record);
 			credential.persisted = true;
+			// The write replaced whatever was left on disk.
+			removalPending = false;
 		} catch {
 			credential.persisted = false;
 			// A relaunch must never restore an older connection.
@@ -80,7 +86,7 @@ export function createDesktopConnection(opts: {
 
 	async function forget(credential: Active): Promise<void> {
 		active = null;
-		if (credential.persisted) await removeRecord();
+		if (credential.persisted || removalPending) await removeRecord();
 	}
 
 	/** Drops a limited choice that no longer fits this health. */
@@ -197,7 +203,10 @@ export function createDesktopConnection(opts: {
 		signOut: () =>
 			queued(async () => {
 				const credential = active;
-				if (credential === null) return signedOut();
+				if (credential === null) {
+					if (removalPending) await removeRecord();
+					return signedOut();
+				}
 				const { serverUrl, token } = credential;
 				const device = await transport.run((request, signal) =>
 					currentDevice(request, signal, serverUrl, token),
@@ -228,10 +237,22 @@ export function createDesktopConnection(opts: {
 				: health;
 		},
 
-		discard: (timeoutMs) =>
-			queued(async () => {
+		discard: (timeoutMs) => {
+			// The limit runs from this call, also while an earlier step is running.
+			const calledAt = performance.now();
+			let expired = false;
+			let timer: ReturnType<typeof setTimeout> | undefined;
+			const deadline = new Promise<void>((resolve) => {
+				timer = setTimeout(() => {
+					expired = true;
+					resolve();
+				}, timeoutMs);
+			});
+			const revoked = queued(async () => {
 				const credential = active;
 				if (credential === null || credential.persisted) return;
+				const remainingMs = timeoutMs - (performance.now() - calledAt);
+				if (expired || remainingMs <= 0) return;
 				const { serverUrl, token } = credential;
 				// Best effort: the result does not matter, the app is quitting.
 				await transport.run(
@@ -246,9 +267,13 @@ export function createDesktopConnection(opts: {
 							? revokeDevice(request, signal, serverUrl, token, device.id)
 							: device;
 					},
-					{ timeoutMs },
+					{ timeoutMs: remainingMs },
 				);
 				active = null;
-			}),
+			});
+			return Promise.race([revoked, deadline]).finally(() =>
+				clearTimeout(timer),
+			);
+		},
 	};
 }

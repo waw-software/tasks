@@ -4,15 +4,36 @@ import {
 } from "@waw/api-contract/connect";
 import type { Failure, HttpReply, RequestFn, RequestInitLike } from "./types";
 
-type Reply = { status: number; body: unknown };
+type Reply = {
+	status: number;
+	body: unknown; // only of a `bodyStatus` reply
+	refused: boolean; // the WAW server's own 401
+};
 
 function authorization(token: string): Record<string, string> {
 	return { authorization: `Bearer ${token}` };
 }
 
+/** A 401 of a proxy says nothing about the token; only the server's body does. */
+async function isRefusal(response: HttpReply): Promise<boolean> {
+	try {
+		const body: unknown = await response.json();
+		return (
+			typeof body === "object" &&
+			body !== null &&
+			"error" in body &&
+			body.error === "unauthorized"
+		);
+	} catch {
+		// The status arrived, so the server was reached.
+		return false;
+	}
+}
+
 /**
- * One authorized request. The body is read only on `bodyStatus`. Null when the
- * request or the read throws; the error is dropped, it can name the URL or a header.
+ * One authorized request. The body is read only on `bodyStatus` and on 401. Null
+ * when the request or a `bodyStatus` read throws; the error is dropped, it can
+ * name the URL or a header.
  */
 async function send(
 	request: RequestFn,
@@ -26,8 +47,9 @@ async function send(
 			redirect: "error",
 		});
 		const { status } = response;
+		const refused = status === 401 && (await isRefusal(response));
 		const body = status === bodyStatus ? await response.json() : undefined;
-		return { status, body };
+		return { status, body, refused };
 	} catch {
 		return null;
 	}
@@ -38,7 +60,7 @@ function refusal(reply: Reply | null): Failure {
 	if (reply === null) return { ok: false, error: "unreachable" };
 	return {
 		ok: false,
-		error: reply.status === 401 ? "unauthorized" : "invalid-response",
+		error: reply.refused ? "unauthorized" : "invalid-response",
 	};
 }
 

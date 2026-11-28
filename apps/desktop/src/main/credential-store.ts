@@ -48,22 +48,42 @@ function isLimitedAck(value: unknown): value is LimitedAck | null {
 	);
 }
 
-/** The record as it lies on disk, `token` still sealed; null when malformed. */
-function parseRecord(text: string): StoredConnection | null {
-	let value: unknown;
+/** The record as it lies on disk. */
+type SealedRecord = { sealed: string; limitedAck: LimitedAck | null };
+
+/** What lies under the seal: the address is bound to its token. */
+type SealedPayload = Pick<StoredConnection, "serverUrl" | "token">;
+
+/** Undefined, which no check below accepts, when the text is not JSON. */
+function parseJson(text: string): unknown {
 	try {
-		value = JSON.parse(text);
+		return JSON.parse(text);
 	} catch {
-		return null;
+		return undefined;
 	}
+}
+
+/** Null when malformed. */
+function parseRecord(text: string): SealedRecord | null {
+	const value = parseJson(text);
 	if (!isObject(value) || value.v !== 1) return null;
-	const { serverUrl, token, limitedAck } = value;
-	if (typeof serverUrl !== "string" || typeof token !== "string") return null;
-	if (token === "" || !BASE64.test(token)) return null;
+	const { sealed, limitedAck } = value;
+	if (typeof sealed !== "string") return null;
+	if (sealed === "" || !BASE64.test(sealed)) return null;
 	if (!isLimitedAck(limitedAck)) return null;
+	return { sealed, limitedAck };
+}
+
+/** The decrypted seal; null when malformed. */
+function parsePayload(text: string): SealedPayload | null {
+	const value = parseJson(text);
+	if (!isObject(value)) return null;
+	const { serverUrl, token } = value;
+	if (typeof serverUrl !== "string" || typeof token !== "string") return null;
 	const origin = normalizeServerOrigin(serverUrl);
 	if (!origin.ok || origin.value !== serverUrl) return null;
-	return { serverUrl, token, limitedAck };
+	if (!isDeviceToken(token)) return null;
+	return { serverUrl, token };
 }
 
 export function createCredentialStore(opts: {
@@ -94,24 +114,29 @@ export function createCredentialStore(opts: {
 			}
 			const record = parseRecord(text);
 			if (record === null) return discardMalformed();
-			let token: string;
+			let opened: string;
 			try {
 				if (!box.isSecure()) return { kind: "unavailable" };
-				token = box.decryptString(Buffer.from(record.token, "base64"));
+				opened = box.decryptString(Buffer.from(record.sealed, "base64"));
 			} catch {
 				return { kind: "unavailable" };
 			}
-			if (!isDeviceToken(token)) return discardMalformed();
-			return { kind: "found", connection: { ...record, token } };
+			const payload = parsePayload(opened);
+			if (payload === null) return discardMalformed();
+			return {
+				kind: "found",
+				connection: { ...payload, limitedAck: record.limitedAck },
+			};
 		},
 
 		async write(connection) {
 			if (!box.isSecure()) throw new Error("secure storage is not available");
+			const { serverUrl, token, limitedAck } = connection;
+			const sealed = box.encryptString(JSON.stringify({ serverUrl, token }));
 			const text = JSON.stringify({
 				v: 1,
-				serverUrl: connection.serverUrl,
-				token: box.encryptString(connection.token).toString("base64"),
-				limitedAck: connection.limitedAck,
+				sealed: sealed.toString("base64"),
+				limitedAck,
 			});
 			const temp = `${target}.${randomUUID()}.tmp`;
 			try {
